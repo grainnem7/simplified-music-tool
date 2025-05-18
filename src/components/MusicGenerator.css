@@ -1,0 +1,22 @@
+.music-generator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+}
+
+.status {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.visualization {
+  width: 200px;
+  height: 50px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}

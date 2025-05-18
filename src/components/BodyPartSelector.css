@@ -1,0 +1,29 @@
+.body-part-selector {
+  margin: 2rem 0;
+}
+
+.presets {
+  margin-bottom: 2rem;
+}
+
+.presets button {
+  margin: 0 0.5rem;
+}
+
+.body-parts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.body-part-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.body-part-option input {
+  cursor: pointer;
+}
