@@ -1,0 +1,129 @@
+.setup-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.setup-title {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.setup-content {
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.diagram-section {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.diagram-caption {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+}
+
+.selector-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.continue-button {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  min-width: 200px;
+}
+
+.continue-button:hover:not(:disabled) {
+  background-color: var(--accent-color);
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.continue-button:disabled {
+  background-color: var(--button-bg);
+  color: var(--text-tertiary);
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.continue-button:focus {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+/* High contrast mode adjustments */
+[data-theme="highContrast"] .continue-button {
+  border: 2px solid white;
+  font-weight: bold;
+}
+
+[data-theme="highContrast"] .continue-button:disabled {
+  border-color: var(--text-tertiary);
+}
+
+[data-theme="highContrast"] .diagram-section {
+  border-width: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+  .setup-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .diagram-section {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .selector-section {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .setup-container {
+    padding: 1rem;
+  }
+  
+  .setup-title {
+    font-size: 1.5rem;
+  }
+  
+  .setup-content {
+    gap: 1.5rem;
+  }
+}

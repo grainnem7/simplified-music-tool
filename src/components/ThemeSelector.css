@@ -1,0 +1,49 @@
+.theme-selector {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.theme-selector label {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.theme-selector select {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--input-border);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-selector select:hover {
+  border-color: var(--accent-color);
+}
+
+.theme-selector select:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 1px;
+}
+
+/* High contrast mode adjustments */
+[data-theme="highContrast"] .theme-selector {
+  border-width: 2px;
+}
+
+[data-theme="highContrast"] .theme-selector select {
+  border-width: 2px;
+  font-weight: bold;
+}

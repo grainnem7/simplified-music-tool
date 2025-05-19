@@ -1,0 +1,73 @@
+.welcome-description {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.welcome-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.feature-list li {
+  padding: 0.75rem 0;
+  color: var(--text-secondary);
+  position: relative;
+  padding-left: 2rem;
+}
+
+.feature-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success-color);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.primary-button {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.primary-button:hover {
+  background-color: var(--accent-color);
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.primary-button:focus {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+/* High contrast adjustments */
+[data-theme="highContrast"] .primary-button {
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+[data-theme="highContrast"] .feature-list li::before {
+  color: var(--success-color);
+  font-weight: bold;
+}

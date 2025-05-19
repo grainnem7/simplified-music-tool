@@ -8,17 +8,21 @@ export function usePoseDetection(webcamRef: React.RefObject<any>) {
   const [modelLoaded, setModelLoaded] = useState(false)
   const detectorRef = useRef<poseDetection.PoseDetector | null>(null)
   const animationFrameRef = useRef<number>()
+  const loggedKeypointsRef = useRef(false)
 
   const initializeDetector = async () => {
     console.log('Initializing pose detector...')
     try {
-      // Make sure TensorFlow is ready
+      // Make sure TensorFlow is ready with WebGL backend for best performance
       await tf.ready()
+      await tf.setBackend('webgl')
       console.log('TensorFlow ready, backend:', tf.getBackend())
       
       const model = poseDetection.SupportedModels.MoveNet
       const detector = await poseDetection.createDetector(model, {
-        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        enableSmoothing: true,  // Enable smoothing for better tracking
+        minPoseScore: 0.2      // Lower threshold for faster detection
       })
       
       detectorRef.current = detector
@@ -41,16 +45,34 @@ export function usePoseDetection(webcamRef: React.RefObject<any>) {
     }
 
     try {
+      const startTime = performance.now()
+      
       const poses = await detectorRef.current.estimatePoses(video, {
         flipHorizontal: false // Don't flip, we'll handle it in display
       })
       
+      const detectionTime = performance.now() - startTime
+      
+      // Emit performance metric
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('performanceUpdate', {
+          detail: { type: 'detectionLatency', value: detectionTime }
+        }))
+      }
+      
       if (poses.length > 0) {
-        // Normalize coordinates
+        // Only log keypoint names once for debugging
+        if (!loggedKeypointsRef.current) {
+          console.log('Detected keypoint names:', poses[0].keypoints.map(kp => kp.name))
+          loggedKeypointsRef.current = true
+        }
+        
+        // Normalize coordinates while preserving all keypoint properties
         const normalizedPoses = poses.map(pose => ({
           ...pose,
           keypoints: pose.keypoints.map(kp => ({
             ...kp,
+            name: kp.name, // Explicitly preserve the name
             x: kp.x / video.videoWidth,
             y: kp.y / video.videoHeight
           }))

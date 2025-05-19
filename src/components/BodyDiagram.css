@@ -1,0 +1,85 @@
+.body-diagram {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.body-svg {
+  width: 180px;
+  height: 260px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Base body outline */
+.body-outline {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  opacity: 0.3;
+}
+
+/* Body parts */
+.body-point {
+  fill: var(--text-secondary);
+  stroke: var(--border-color);
+  stroke-width: 2;
+  transition: all 0.3s ease;
+  opacity: 0.3;
+  cursor: pointer;
+}
+
+/* Active body parts */
+.body-point.active {
+  fill: var(--accent-color);
+  stroke: var(--accent-color);
+  opacity: 1;
+  filter: brightness(1.2);
+}
+
+/* Pulse animation for active parts */
+.body-point-glow {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+/* Labels */
+.body-label {
+  font-size: 10px;
+  fill: var(--text-secondary);
+  text-anchor: middle;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.body-point:hover + .body-label,
+.body-point.active + .body-label {
+  opacity: 1;
+}
+
+/* High contrast mode */
+[data-theme="highContrast"] .body-svg path {
+  stroke: white;
+  stroke-width: 3;
+}
+
+[data-theme="highContrast"] .body-point {
+  stroke: white;
+  stroke-width: 2;
+}
+
+[data-theme="highContrast"] .body-label {
+  fill: white;
+  font-weight: bold;
+}

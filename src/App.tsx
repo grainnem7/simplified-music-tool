@@ -3,6 +3,8 @@ import './App.css'
 import WelcomeScreen from './components/WelcomeScreen'
 import SetupScreen from './components/SetupScreen'
 import PerformanceView from './components/PerformanceView'
+import ThemeSelector from './components/ThemeSelector'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 type AppState = 'welcome' | 'setup' | 'performance'
 
@@ -24,16 +26,23 @@ function App() {
   }
 
   return (
-    <div className="App">
-      {currentState === 'welcome' && <WelcomeScreen onStart={handleStart} />}
-      {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
-      {currentState === 'performance' && (
-        <PerformanceView 
-          selectedBodyParts={selectedBodyParts} 
-          onBackToSetup={handleBackToSetup}
-        />
-      )}
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <header className="app-header">
+          <ThemeSelector />
+        </header>
+        <main id="main-content">
+          {currentState === 'welcome' && <WelcomeScreen onStart={handleStart} />}
+          {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
+          {currentState === 'performance' && (
+            <PerformanceView 
+              selectedBodyParts={selectedBodyParts} 
+              onBackToSetup={handleBackToSetup}
+            />
+          )}
+        </main>
+      </div>
+    </ThemeProvider>
   )
 }
 
