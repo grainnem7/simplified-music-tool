@@ -117,6 +117,23 @@ src/
 - Error boundaries should be added for production
 - Performance optimization critical for real-time interaction
 
+### Customizable Music Mapping System
+
+The application now features a comprehensive music mapping configuration system:
+
+1. **Flexible Axis Mapping**: Each body part can map X/Y/velocity to different parameters
+2. **Multiple Instruments**: Piano, synth, strings, drums, bass, pad
+3. **Musical Roles**: Melody, harmony, rhythm, bass, effects
+4. **Scale Selection**: Pentatonic, major, minor, blues, chromatic, etc.
+5. **Presets**: Intuitive, experimental, drummer configurations
+6. **Visual Feedback**: Axis visualizer showing mapping relationships
+
+Key components:
+- `MusicMappingConfig.tsx`: UI for configuring mappings
+- `types/musicMapping.ts`: Type definitions and presets
+- `AxisVisualizer.tsx`: Visual representation of axis mappings
+- `useMusicGeneration.ts`: Hook handling flexible music generation
+
 ### Common Tasks
 
 ```bash

@@ -3,6 +3,8 @@ import * as Tone from 'tone'
 import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
 import BodyDiagram from './BodyDiagram'
+import MusicDebugger from './MusicDebugger'
+import MusicMappingConfig from './MusicMappingConfig'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import './PerformanceView.css'
@@ -40,7 +42,7 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
   const webcamRef = useRef<any>(null)
   
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
-  const { generateMusic, stopMusic, currentPreset } = useMusicGeneration()
+  const { generateMusic, stopMusic, currentConfig, updateConfig } = useMusicGeneration()
 
   useEffect(() => {
     if (isPerforming && poses) {
@@ -92,6 +94,13 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         </div>
       )}
       
+      {/* Music Mapping Configuration */}
+      <MusicMappingConfig
+        selectedBodyParts={selectedBodyParts}
+        currentConfig={currentConfig}
+        onConfigUpdate={updateConfig}
+      />
+      
       <div className="performance-area">
         <div className="webcam-container">
           <WebcamCapture ref={webcamRef} poses={poses} />
@@ -115,6 +124,7 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
               isActive={isPerforming}
               poses={poses}
               selectedBodyParts={selectedBodyParts}
+              currentConfig={currentConfig}
             />
           </div>
         </div>
@@ -162,6 +172,9 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       >
         Debug
       </button>
+      
+      {/* Music Debugger for testing */}
+      <MusicDebugger />
     </div>
   )
 }

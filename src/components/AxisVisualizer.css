@@ -1,0 +1,124 @@
+.axis-visualizer {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--surface-color);
+  border-radius: 8px;
+}
+
+.axis-diagram {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+
+.axis-grid {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 160px;
+  height: 160px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-color);
+}
+
+.grid-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.axis-line {
+  position: absolute;
+  background: var(--border-color);
+}
+
+.axis-line.vertical {
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.axis-line.horizontal {
+  top: 50%;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  transform: translateY(-50%);
+}
+
+.center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.y-axis-label {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+}
+
+.x-axis-label {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+}
+
+.axis-arrow {
+  font-size: 1.2rem;
+  color: var(--accent-color);
+}
+
+.axis-value {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.bottom-label {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.axis-legend {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+}
+
+.indicator {
+  color: var(--accent-color);
+  font-weight: bold;
+  font-size: 1rem;
+}

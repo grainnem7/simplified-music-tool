@@ -8,11 +8,12 @@ interface MusicGeneratorProps {
   isActive: boolean
   poses: Pose[] | null
   selectedBodyParts: string[]
+  currentConfig?: any
 }
 
-function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorProps) {
+function MusicGenerator({ isActive, poses, selectedBodyParts, currentConfig }: MusicGeneratorProps) {
   const [testStatus, setTestStatus] = useState<string>('')
-  const { generateMusic, selectPreset, currentPreset, testSound } = useMusicGeneration()
+  const { testSound } = useMusicGeneration()
   
   const presets = [
     { name: 'piano', label: 'Piano', description: 'Classic piano sounds' },
@@ -40,21 +41,14 @@ function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorPr
 
   return (
     <div className="music-generator">
-      {/* Preset Selection */}
-      <div className="preset-selection">
-        <h4>Sound Preset</h4>
-        <div className="preset-buttons">
-          {presets.map(preset => (
-            <button
-              key={preset.name}
-              onClick={() => selectPreset(preset.name)}
-              className={`preset-button ${currentPreset === preset.name ? 'active' : ''}`}
-              title={preset.description}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
+      {/* Configuration status */}
+      <div className="config-status">
+        {currentConfig && (
+          <div>
+            <h4>Current Configuration</h4>
+            <p>{currentConfig.name}: {currentConfig.description}</p>
+          </div>
+        )}
       </div>
       
       <div className={`status ${isActive ? 'active' : ''}`}>
@@ -98,9 +92,23 @@ function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorPr
         )}
       </div>
       
-      {/* Preset info */}
-      <div className="preset-info">
-        <p>{presets.find(p => p.name === currentPreset)?.description}</p>
+      {/* Active mappings info */}
+      <div className="active-mappings">
+        {selectedBodyParts.length > 0 && currentConfig && (
+          <div>
+            <h5>Active Mappings</h5>
+            {selectedBodyParts.map(part => {
+              const mapping = currentConfig.mappings?.[part]
+              if (!mapping) return null
+              return (
+                <div key={part} className="mapping-info">
+                  <span>{part}: </span>
+                  <span>{mapping.instrument} ({mapping.role})</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

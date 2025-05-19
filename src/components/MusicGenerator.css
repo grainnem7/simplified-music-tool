@@ -171,3 +171,48 @@
 .preset-info p {
   margin: 0;
 }
+
+.config-status {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.config-status h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--accent-color);
+  font-size: 1rem;
+}
+
+.config-status p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.active-mappings {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.active-mappings h5 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.mapping-info {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  padding: 0.25rem 0;
+}
+
+.mapping-info span:first-child {
+  font-weight: bold;
+  text-transform: capitalize;
+}

@@ -2,63 +2,101 @@ import { useCallback, useRef, useState } from 'react'
 import * as Tone from 'tone'
 import { Pose } from '@tensorflow-models/pose-detection'
 import { BODY_PART_TO_KEYPOINT } from '../services/musicMapping'
+import { MusicMappingConfig, PRESET_CONFIGS } from '../types/musicMapping'
 
-// Simple, harmonious scales
-const SCALES = {
-  pentatonic: ['C', 'D', 'E', 'G', 'A'],
-  major: ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+interface BodyPartState {
+  previousY: number
+  previousX: number
+  lastTriggerTime: number
+  velocity: number
 }
 
-// Simple chord progression in C major
-const SIMPLE_CHORDS = [
-  ['C3', 'E3', 'G3'],    // C major
-  ['F3', 'A3', 'C4'],    // F major
-  ['G3', 'B3', 'D4'],    // G major
-  ['A3', 'C4', 'E4'],    // A minor
-]
-
 export function useMusicGeneration() {
-  const synthRef = useRef<Tone.PolySynth | null>(null)
-  const [currentPreset, setCurrentPreset] = useState<string>('piano')
+  const synthsRef = useRef<Record<string, any>>({})
+  const [currentConfig, setCurrentConfig] = useState<MusicMappingConfig>(PRESET_CONFIGS.intuitive)
   const isInitializedRef = useRef(false)
-  const lastNoteTimeRef = useRef<number>(0)
-  const lastChordTimeRef = useRef<number>(0)
-  const currentChordIndexRef = useRef<number>(0)
-  const previousPositionsRef = useRef<Record<string, { x: number; y: number }>>({})
+  const bodyPartStatesRef = useRef<Record<string, BodyPartState>>({})
 
-  // Initialize synth
+  // Initialize synthesizers for each instrument type
   const initializeSynth = useCallback(async () => {
     if (isInitializedRef.current) return
     
-    console.log('Initializing simple harmonious synth...')
+    console.log('Initializing flexible music system...')
     
     try {
-      // Make sure audio context is started
       if (Tone.context.state !== 'running') {
         await Tone.start()
       }
       
-      // Simple polyphonic synth with warm sound
-      synthRef.current = new Tone.PolySynth(Tone.Synth, {
+      // Initialize different instrument types
+      synthsRef.current.piano = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'triangle' },
+        envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
+      }).toDestination()
+      
+      synthsRef.current.synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sawtooth' },
+        envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.5 }
+      }).toDestination()
+      
+      synthsRef.current.strings = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.3, decay: 0.1, sustain: 0.7, release: 2 }
+      }).toDestination()
+      
+      synthsRef.current.bass = new Tone.MonoSynth({
+        oscillator: { type: 'square' },
+        envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.5 }
+      }).toDestination()
+      
+      synthsRef.current.pad = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 1, decay: 0.3, sustain: 0.6, release: 3 }
+      }).toDestination()
+      
+      // Initialize a simple drum kit using membrane synth for drums
+      synthsRef.current.drums = new Tone.MembraneSynth({
+        pitchDecay: 0.05,
+        octaves: 10,
+        oscillator: { type: 'sine' },
         envelope: {
-          attack: 0.2,
-          decay: 0.3,
-          sustain: 0.4,
-          release: 1.5
+          attack: 0.001,
+          decay: 0.4,
+          sustain: 0.01,
+          release: 1.4
         }
       }).toDestination()
       
-      // Set a pleasant volume
-      synthRef.current.volume.value = -8
+      // Set volumes
+      Object.values(synthsRef.current).forEach(synth => {
+        if (synth) synth.volume.value = -10
+      })
       
       isInitializedRef.current = true
-      console.log('Synth initialized successfully')
+      console.log('Music system initialized')
       
     } catch (error) {
       console.error('Failed to initialize synth:', error)
     }
   }, [])
+
+  const processAxisMapping = (
+    value: number,
+    mapping: typeof currentConfig.mappings[string]['xAxis'],
+    currentValue?: number
+  ): number => {
+    let mappedValue = value
+    
+    if (mapping.invert) {
+      mappedValue = 1 - mappedValue
+    }
+    
+    // Map to the specified range
+    const [min, max] = mapping.range
+    mappedValue = min + (mappedValue * (max - min))
+    
+    return mappedValue
+  }
 
   const generateMusic = useCallback(async (poses: Pose[] | null, selectedBodyParts: string[]) => {
     if (!poses || poses.length === 0 || selectedBodyParts.length === 0) {
@@ -67,100 +105,172 @@ export function useMusicGeneration() {
 
     await initializeSynth()
     
-    if (!synthRef.current) {
-      console.log('Synth not ready')
-      return
-    }
-
     const pose = poses[0]
     const currentTime = Date.now()
     
-    // Debug logging
-    console.log('Generating music with', selectedBodyParts.length, 'body parts')
-    
-    // Process each selected body part
+    // Process each selected body part with its custom mapping
     selectedBodyParts.forEach(bodyPart => {
+      const mapping = currentConfig.mappings[bodyPart]
+      if (!mapping || !mapping.enabled) return
+      
       const possibleKeypointNames = BODY_PART_TO_KEYPOINT[bodyPart] || [bodyPart]
       const keypoint = pose.keypoints.find(kp => {
         return possibleKeypointNames.includes(kp.name || '')
       })
       
-      if (keypoint && keypoint.score && keypoint.score > 0.3) {
-        const currentPos = { x: keypoint.x, y: keypoint.y }
-        const previousPos = previousPositionsRef.current[bodyPart]
-        
-        if (previousPos) {
-          const dx = currentPos.x - previousPos.x
-          const dy = currentPos.y - previousPos.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
-          
-          // Only trigger sound on significant movement
-          if (distance > 0.02) {
-            // Rate limiting: one note per body part every 150ms
-            if (currentTime - lastNoteTimeRef.current > 150) {
-              // Map vertical position to note
-              const scale = SCALES.pentatonic
-              const octave = Math.floor((1 - keypoint.y) * 2) + 4 // Octaves 4-5
-              const noteIndex = Math.floor(keypoint.x * scale.length)
-              const note = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))] + octave
-              
-              // Play a simple note
-              const velocity = Math.min(0.7, distance * 3)
-              synthRef.current.triggerAttackRelease(note, '8n', undefined, velocity)
-              
-              lastNoteTimeRef.current = currentTime
-              
-              // Play a chord every 2 seconds for harmonic foundation
-              if (currentTime - lastChordTimeRef.current > 2000) {
-                const chord = SIMPLE_CHORDS[currentChordIndexRef.current]
-                synthRef.current.triggerAttackRelease(chord, '2n', undefined, 0.3)
-                
-                currentChordIndexRef.current = (currentChordIndexRef.current + 1) % SIMPLE_CHORDS.length
-                lastChordTimeRef.current = currentTime
-              }
-            }
-          }
+      if (!keypoint || !keypoint.score || keypoint.score < 0.3) return
+      
+      // Initialize state for this body part if needed
+      if (!bodyPartStatesRef.current[bodyPart]) {
+        bodyPartStatesRef.current[bodyPart] = {
+          previousY: keypoint.y,
+          previousX: keypoint.x,
+          lastTriggerTime: 0,
+          velocity: 0
         }
-        
-        previousPositionsRef.current[bodyPart] = currentPos
       }
+      
+      const state = bodyPartStatesRef.current[bodyPart]
+      
+      // Calculate movement velocity
+      const movementY = Math.abs(keypoint.y - state.previousY)
+      const movementX = Math.abs(keypoint.x - state.previousX)
+      const velocity = Math.sqrt(movementY * movementY + movementX * movementX)
+      
+      // Process each axis according to its mapping
+      let pitch = mapping.scale[0] + '4' // Default pitch
+      let volume = 0.5
+      let timbre = 0.5
+      let filter = 1000
+      let tempo = 120
+      
+      // X-axis processing
+      if (mapping.xAxis.parameter !== 'none') {
+        const xValue = processAxisMapping(keypoint.x, mapping.xAxis)
+        
+        switch (mapping.xAxis.parameter) {
+          case 'pitch':
+            const noteIndex = Math.floor(xValue * mapping.scale.length)
+            const note = mapping.scale[Math.max(0, Math.min(noteIndex, mapping.scale.length - 1))]
+            const octave = Math.floor(xValue * (mapping.octaveRange[1] - mapping.octaveRange[0])) + mapping.octaveRange[0]
+            pitch = note + octave
+            break
+          case 'volume':
+            volume = xValue
+            break
+          case 'timbre':
+            timbre = xValue
+            break
+          case 'filter':
+            filter = xValue
+            break
+          case 'tempo':
+            tempo = xValue
+            break
+        }
+      }
+      
+      // Y-axis processing
+      if (mapping.yAxis.parameter !== 'none') {
+        const yValue = processAxisMapping(keypoint.y, mapping.yAxis)
+        
+        switch (mapping.yAxis.parameter) {
+          case 'pitch':
+            const noteIndex = Math.floor(yValue * mapping.scale.length)
+            const note = mapping.scale[Math.max(0, Math.min(noteIndex, mapping.scale.length - 1))]
+            const octave = Math.floor(yValue * (mapping.octaveRange[1] - mapping.octaveRange[0])) + mapping.octaveRange[0]
+            pitch = note + octave
+            break
+          case 'volume':
+            volume = yValue
+            break
+          case 'timbre':
+            timbre = yValue
+            break
+          case 'filter':
+            filter = yValue
+            break
+          case 'tempo':
+            tempo = yValue
+            break
+        }
+      }
+      
+      // Velocity axis processing
+      if (mapping.velocityAxis.parameter !== 'none') {
+        const velocityValue = processAxisMapping(velocity * 10, mapping.velocityAxis) // Scale velocity
+        
+        switch (mapping.velocityAxis.parameter) {
+          case 'volume':
+            volume = velocityValue
+            break
+          case 'pitch':
+            // Modulate pitch slightly based on velocity
+            break
+          case 'timbre':
+            timbre = velocityValue
+            break
+          case 'filter':
+            filter = velocityValue
+            break
+          case 'tempo':
+            tempo = velocityValue
+            break
+        }
+      }
+      
+      // Trigger note based on movement threshold and rate limiting
+      if (velocity > 0.02 && currentTime - state.lastTriggerTime > 100) {
+        const synth = synthsRef.current[mapping.instrument]
+        
+        if (synth) {
+          // Apply filter if supported (only on some synth types)
+          if ('filter' in synth && synth.filter) {
+            synth.filter.frequency.value = filter
+          }
+          
+          // Play the note
+          if (mapping.instrument === 'drums') {
+            // For drums, use pitch to control drum frequency
+            const drumFreq = 60 + (yValue * 200) // 60-260 Hz range
+            synth.frequency.value = drumFreq
+            synth.triggerAttackRelease('C2', '8n', undefined, volume)
+          } else {
+            synth.triggerAttackRelease(pitch, '8n', undefined, volume)
+          }
+          
+          state.lastTriggerTime = currentTime
+        }
+      }
+      
+      // Update state
+      state.previousY = keypoint.y
+      state.previousX = keypoint.x
+      state.velocity = velocity
     })
-  }, [initializeSynth])
+  }, [currentConfig, initializeSynth])
 
   const stopMusic = useCallback(() => {
-    if (synthRef.current) {
-      synthRef.current.releaseAll()
-    }
-    previousPositionsRef.current = {}
+    Object.values(synthsRef.current).forEach(synth => {
+      if (synth) {
+        if ('releaseAll' in synth) {
+          synth.releaseAll()
+        } else if ('triggerRelease' in synth) {
+          synth.triggerRelease()
+        }
+      }
+    })
+    bodyPartStatesRef.current = {}
+  }, [])
+
+  const updateConfig = useCallback((config: MusicMappingConfig) => {
+    setCurrentConfig(config)
   }, [])
 
   const selectPreset = useCallback((presetName: string) => {
-    console.log('Selecting preset:', presetName)
-    setCurrentPreset(presetName)
-    
-    if (synthRef.current) {
-      // Adjust synth settings based on preset
-      if (presetName === 'piano') {
-        synthRef.current.set({
-          oscillator: { type: 'triangle' },
-          envelope: {
-            attack: 0.02,
-            decay: 0.3,
-            sustain: 0.4,
-            release: 1.5
-          }
-        })
-      } else if (presetName === 'synth') {
-        synthRef.current.set({
-          oscillator: { type: 'sawtooth' },
-          envelope: {
-            attack: 0.1,
-            decay: 0.2,
-            sustain: 0.6,
-            release: 0.8
-          }
-        })
-      }
+    const preset = PRESET_CONFIGS[presetName]
+    if (preset) {
+      setCurrentConfig(preset)
     }
   }, [])
 
@@ -168,17 +278,22 @@ export function useMusicGeneration() {
     console.log('Playing test sound...')
     await initializeSynth()
     
-    if (synthRef.current) {
-      // Play a simple, pleasant sequence
-      const notes = ['C4', 'E4', 'G4', 'C5']
-      notes.forEach((note, index) => {
-        synthRef.current?.triggerAttackRelease(note, '8n', `+${index * 0.2}`)
+    const synth = synthsRef.current.piano
+    if (synth) {
+      // Play a scale
+      const scale = currentConfig.globalScale
+      scale.forEach((note, index) => {
+        synth.triggerAttackRelease(note + '4', '8n', `+${index * 0.1}`)
       })
-      
-      // Add a chord
-      synthRef.current.triggerAttackRelease(['C3', 'E3', 'G3'], '1n', '+1')
     }
-  }, [initializeSynth])
+  }, [currentConfig, initializeSynth])
 
-  return { generateMusic, stopMusic, selectPreset, currentPreset, testSound }
+  return { 
+    generateMusic, 
+    stopMusic, 
+    currentConfig, 
+    updateConfig, 
+    selectPreset, 
+    testSound 
+  }
 }
