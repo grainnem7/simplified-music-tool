@@ -1,122 +1,62 @@
 import { useCallback, useRef, useState } from 'react'
 import * as Tone from 'tone'
 import { Pose } from '@tensorflow-models/pose-detection'
-import { BODY_PART_TO_KEYPOINT, SCALES } from '../services/musicMapping'
+import { BODY_PART_TO_KEYPOINT } from '../services/musicMapping'
+
+// Simple, harmonious scales
+const SCALES = {
+  pentatonic: ['C', 'D', 'E', 'G', 'A'],
+  major: ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+}
+
+// Simple chord progression in C major
+const SIMPLE_CHORDS = [
+  ['C3', 'E3', 'G3'],    // C major
+  ['F3', 'A3', 'C4'],    // F major
+  ['G3', 'B3', 'D4'],    // G major
+  ['A3', 'C4', 'E4'],    // A minor
+]
 
 export function useMusicGeneration() {
   const synthRef = useRef<Tone.PolySynth | null>(null)
-  const drumSynthRef = useRef<any>({})
-  const fmSynthRef = useRef<Tone.FMSynth | null>(null)
   const [currentPreset, setCurrentPreset] = useState<string>('piano')
   const isInitializedRef = useRef(false)
+  const lastNoteTimeRef = useRef<number>(0)
+  const lastChordTimeRef = useRef<number>(0)
+  const currentChordIndexRef = useRef<number>(0)
+  const previousPositionsRef = useRef<Record<string, { x: number; y: number }>>({})
 
-  // Initialize all synths and drums
-  const initializeSynths = useCallback(async () => {
+  // Initialize synth
+  const initializeSynth = useCallback(async () => {
     if (isInitializedRef.current) return
     
-    console.log('Initializing Tone.js...')
+    console.log('Initializing simple harmonious synth...')
     
     try {
-      await Tone.start()
-      console.log('Tone.js started, context state:', Tone.context.state)
-      
-      // Make sure the context is running
+      // Make sure audio context is started
       if (Tone.context.state !== 'running') {
-        await Tone.context.resume()
+        await Tone.start()
       }
       
-      // Piano synth
+      // Simple polyphonic synth with warm sound
       synthRef.current = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'triangle' },
         envelope: {
-          attack: 0.02,
-          decay: 0.1,
-          sustain: 0.3,
-          release: 1
+          attack: 0.2,
+          decay: 0.3,
+          sustain: 0.4,
+          release: 1.5
         }
       }).toDestination()
+      
+      // Set a pleasant volume
       synthRef.current.volume.value = -8
       
-      // Drums
-      drumSynthRef.current = {
-        kick: new Tone.MembraneSynth({
-          pitchDecay: 0.05,
-          octaves: 5,
-          oscillator: { type: 'sine' },
-          envelope: {
-            attack: 0.001,
-            decay: 0.3,
-            sustain: 0.2,
-            release: 0.3,
-          }
-        }).toDestination(),
-        
-        snare: new Tone.NoiseSynth({
-          noise: { type: 'white' },
-          envelope: {
-            attack: 0.001,
-            decay: 0.1,
-            sustain: 0.01,
-            release: 0.1
-          }
-        }).toDestination(),
-        
-        hihat: new Tone.MetalSynth({
-          frequency: 120,
-          envelope: {
-            attack: 0.001,
-            decay: 0.1,
-            release: 0.01
-          },
-          harmonicity: 3.2,
-          modulationIndex: 20,
-          resonance: 8000,
-          octaves: 1.5
-        }).toDestination(),
-        
-        crash: new Tone.MetalSynth({
-          frequency: 60,
-          envelope: {
-            attack: 0.001,
-            decay: 1,
-            release: 0.5
-          },
-          harmonicity: 5.1,
-          modulationIndex: 40,
-          resonance: 4000,
-          octaves: 2.5
-        }).toDestination()
-      }
-      
-      // Set volumes
-      drumSynthRef.current.kick.volume.value = -6
-      drumSynthRef.current.snare.volume.value = -8
-      drumSynthRef.current.hihat.volume.value = -12
-      drumSynthRef.current.crash.volume.value = -10
-      
-      // FM Synth for synthesizer preset
-      fmSynthRef.current = new Tone.FMSynth({
-        harmonicity: 3,
-        modulationIndex: 10,
-        detune: 0,
-        oscillator: { type: 'sine' },
-        envelope: {
-          attack: 0.01,
-          decay: 0.2,
-          sustain: 0.5,
-          release: 0.8
-        },
-        modulation: {
-          type: 'square'
-        }
-      }).toDestination()
-      fmSynthRef.current.volume.value = -10
-      
       isInitializedRef.current = true
-      console.log('Synths initialized')
+      console.log('Synth initialized successfully')
       
     } catch (error) {
-      console.error('Failed to initialize Tone.js:', error)
+      console.error('Failed to initialize synth:', error)
     }
   }, [])
 
@@ -125,123 +65,120 @@ export function useMusicGeneration() {
       return
     }
 
-    await initializeSynths()
+    await initializeSynth()
+    
+    if (!synthRef.current) {
+      console.log('Synth not ready')
+      return
+    }
 
     const pose = poses[0]
-    const scale = SCALES.pentatonic
-    let totalMovement = 0
-    let validPartCount = 0
+    const currentTime = Date.now()
     
-    console.log('Generating music for', selectedBodyParts.length, 'body parts')
-    console.log('Selected parts:', selectedBodyParts)
-    console.log('Current preset:', currentPreset)
-
+    // Debug logging
+    console.log('Generating music with', selectedBodyParts.length, 'body parts')
+    
+    // Process each selected body part
     selectedBodyParts.forEach(bodyPart => {
       const possibleKeypointNames = BODY_PART_TO_KEYPOINT[bodyPart] || [bodyPart]
-      console.log('Looking for keypoint names:', possibleKeypointNames)
-      
       const keypoint = pose.keypoints.find(kp => {
-        const match = possibleKeypointNames.includes(kp.name || '')
-        if (kp.name) console.log('Checking:', kp.name, 'against', possibleKeypointNames, '=', match)
-        return match
+        return possibleKeypointNames.includes(kp.name || '')
       })
       
-      console.log('Found keypoint:', keypoint?.name, 'with score:', keypoint?.score)
-      
       if (keypoint && keypoint.score && keypoint.score > 0.3) {
-        // Normalize Y position (0 = top, 1 = bottom, but flip it for musical sense)
-        const normalizedY = 1 - keypoint.y
+        const currentPos = { x: keypoint.x, y: keypoint.y }
+        const previousPos = previousPositionsRef.current[bodyPart]
         
-        // Map Y position to note index (0 to scale.length)
-        const noteIndex = Math.floor(normalizedY * scale.length)
-        const pitchIndex = Math.max(0, Math.min(scale.length - 1, noteIndex))
-        const pitch = scale[pitchIndex]
-        
-        // Map X position to duration
-        const normalizedX = keypoint.x
-        const duration = normalizedX < 0.3 ? '16n' : normalizedX < 0.7 ? '8n' : '4n'
-        
-        // Calculate velocity based on confidence
-        const velocity = keypoint.score * 0.8
-        
-        // Play different sounds based on current preset
-        console.log('Playing note:', { bodyPart, pitch, duration, velocity, preset: currentPreset })
-        
-        if (currentPreset === 'piano' && synthRef.current) {
-          console.log('Triggering piano synth')
-          synthRef.current.triggerAttackRelease(pitch, duration, undefined, velocity)
-        } else if (currentPreset === 'drums' && drumSynthRef.current) {
-          // Map body parts to different drums
-          if (bodyPart.includes('Wrist') || bodyPart.includes('Hand')) {
-            drumSynthRef.current.snare?.triggerAttackRelease(duration)
-          } else if (bodyPart.includes('Ankle') || bodyPart.includes('Foot')) {
-            drumSynthRef.current.kick?.triggerAttackRelease('C1', duration)
-          } else if (bodyPart.includes('Knee')) {
-            drumSynthRef.current.hihat?.triggerAttack()
-          } else if (bodyPart === 'nose' || bodyPart.includes('Head')) {
-            drumSynthRef.current.crash?.triggerAttackRelease(duration)
+        if (previousPos) {
+          const dx = currentPos.x - previousPos.x
+          const dy = currentPos.y - previousPos.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          
+          // Only trigger sound on significant movement
+          if (distance > 0.02) {
+            // Rate limiting: one note per body part every 150ms
+            if (currentTime - lastNoteTimeRef.current > 150) {
+              // Map vertical position to note
+              const scale = SCALES.pentatonic
+              const octave = Math.floor((1 - keypoint.y) * 2) + 4 // Octaves 4-5
+              const noteIndex = Math.floor(keypoint.x * scale.length)
+              const note = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))] + octave
+              
+              // Play a simple note
+              const velocity = Math.min(0.7, distance * 3)
+              synthRef.current.triggerAttackRelease(note, '8n', undefined, velocity)
+              
+              lastNoteTimeRef.current = currentTime
+              
+              // Play a chord every 2 seconds for harmonic foundation
+              if (currentTime - lastChordTimeRef.current > 2000) {
+                const chord = SIMPLE_CHORDS[currentChordIndexRef.current]
+                synthRef.current.triggerAttackRelease(chord, '2n', undefined, 0.3)
+                
+                currentChordIndexRef.current = (currentChordIndexRef.current + 1) % SIMPLE_CHORDS.length
+                lastChordTimeRef.current = currentTime
+              }
+            }
           }
-        } else if (currentPreset === 'synth' && fmSynthRef.current) {
-          // Play with FM synth for synthesizer preset
-          fmSynthRef.current.triggerAttackRelease(pitch, duration, undefined, velocity)
         }
         
-        // Calculate movement for tempo
-        totalMovement += Math.abs(keypoint.x - 0.5) + Math.abs(keypoint.y - 0.5)
-        validPartCount++
+        previousPositionsRef.current[bodyPart] = currentPos
       }
     })
-
-    // Calculate tempo based on average movement
-    if (validPartCount > 0) {
-      const averageMovement = totalMovement / validPartCount
-      const tempo = Math.floor(60 + averageMovement * 120) // 60-180 BPM based on movement
-      Tone.Transport.bpm.value = Math.min(180, Math.max(60, tempo))
-    }
-  }, [currentPreset, initializeSynths])
+  }, [initializeSynth])
 
   const stopMusic = useCallback(() => {
-    synthRef.current?.releaseAll()
-    fmSynthRef.current?.triggerRelease()
-    Object.values(drumSynthRef.current).forEach((drum: any) => {
-      if (drum && drum.triggerRelease) {
-        drum.triggerRelease()
-      }
-    })
+    if (synthRef.current) {
+      synthRef.current.releaseAll()
+    }
+    previousPositionsRef.current = {}
   }, [])
 
   const selectPreset = useCallback((presetName: string) => {
     console.log('Selecting preset:', presetName)
     setCurrentPreset(presetName)
+    
+    if (synthRef.current) {
+      // Adjust synth settings based on preset
+      if (presetName === 'piano') {
+        synthRef.current.set({
+          oscillator: { type: 'triangle' },
+          envelope: {
+            attack: 0.02,
+            decay: 0.3,
+            sustain: 0.4,
+            release: 1.5
+          }
+        })
+      } else if (presetName === 'synth') {
+        synthRef.current.set({
+          oscillator: { type: 'sawtooth' },
+          envelope: {
+            attack: 0.1,
+            decay: 0.2,
+            sustain: 0.6,
+            release: 0.8
+          }
+        })
+      }
+    }
   }, [])
 
   const testSound = useCallback(async () => {
-    console.log('Test sound triggered for preset:', currentPreset)
-    await initializeSynths()
+    console.log('Playing test sound...')
+    await initializeSynth()
     
-    // Ensure audio context is running
-    if (Tone.context.state !== 'running') {
-      console.log('Starting audio context...')
-      await Tone.context.resume()
+    if (synthRef.current) {
+      // Play a simple, pleasant sequence
+      const notes = ['C4', 'E4', 'G4', 'C5']
+      notes.forEach((note, index) => {
+        synthRef.current?.triggerAttackRelease(note, '8n', `+${index * 0.2}`)
+      })
+      
+      // Add a chord
+      synthRef.current.triggerAttackRelease(['C3', 'E3', 'G3'], '1n', '+1')
     }
-    
-    console.log('Audio context state:', Tone.context.state)
-    
-    if (currentPreset === 'piano' && synthRef.current) {
-      console.log('Playing piano test sound')
-      synthRef.current.triggerAttackRelease(['C4', 'E4', 'G4'], '4n')
-    } else if (currentPreset === 'drums' && drumSynthRef.current.kick) {
-      drumSynthRef.current.kick.triggerAttackRelease('C1', '8n')
-      setTimeout(() => {
-        drumSynthRef.current.snare?.triggerAttackRelease('8n')
-      }, 200)
-      setTimeout(() => {
-        drumSynthRef.current.hihat?.triggerAttackRelease('8n')
-      }, 400)
-    } else if (currentPreset === 'synth' && fmSynthRef.current) {
-      fmSynthRef.current.triggerAttackRelease('G3', '8n')
-    }
-  }, [currentPreset, initializeSynths])
+  }, [initializeSynth])
 
   return { generateMusic, stopMusic, selectPreset, currentPreset, testSound }
 }

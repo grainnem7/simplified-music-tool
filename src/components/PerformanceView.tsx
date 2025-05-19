@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import * as Tone from 'tone'
 import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
 import BodyDiagram from './BodyDiagram'
@@ -61,6 +62,10 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         stopDetection()
         stopMusic()
       } else {
+        // Start Tone.js audio context on user interaction
+        await Tone.start()
+        console.log('Started Tone.js context')
+        
         await startDetection()
       }
       setIsPerforming(!isPerforming)
