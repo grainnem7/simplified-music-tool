@@ -15,7 +15,7 @@ function WelcomeScreen({ onStart }: WelcomeScreenProps) {
         <p>This application uses your webcam to detect body movements and generates music in real-time based on your gestures.</p>
         <ul className="feature-list" aria-label="Application features">
           <li>Real-time pose detection using AI</li>
-          <li>Customizable body part selection</li>
+          <li>Customisable body part selection</li>
           <li>Dynamic music generation</li>
           <li>Accessible with multiple theme options</li>
         </ul>
