@@ -146,31 +146,19 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
   }, [poses])
 
   return (
-    <div className="webcam-container" style={{ position: 'relative' }}>
+    <div className="webcam-container">
       <Webcam
         ref={ref}
         audio={false}
         videoConstraints={videoConstraints}
         mirrored={true}
-        style={{
-          width: '100%',
-          maxWidth: '640px',
-          height: 'auto'
-        }}
+        className="webcam-video"
       />
       <canvas
         ref={canvasRef}
         width={640}
         height={480}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          maxWidth: '640px',
-          height: 'auto',
-          pointerEvents: 'none'
-        }}
+        className="webcam-canvas"
       />
     </div>
   )

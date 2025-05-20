@@ -10,6 +10,11 @@
   transition: background-color 0.3s ease;
 }
 
+/* Hide GitHub corner */
+.github-corner {
+  display: none !important;
+}
+
 .app-header {
   position: relative;
   width: 100%;

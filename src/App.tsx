@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import WelcomeScreen from './components/WelcomeScreen'
 import SetupScreen from './components/SetupScreen'
@@ -11,6 +11,14 @@ type AppState = 'welcome' | 'setup' | 'performance'
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('welcome')
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([])
+  
+  // Remove any GitHub corners that might be present from previous builds
+  useEffect(() => {
+    const githubCorner = document.querySelector('.github-corner')
+    if (githubCorner) {
+      githubCorner.remove()
+    }
+  }, [])
 
   const handleStart = () => {
     setCurrentState('setup')
