@@ -2,33 +2,82 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ master ]  # Using master branch
-  workflow_dispatch:
+    branches: [ "master" ]  # Set this to your main branch name (master or main)
+  workflow_dispatch:  # Allows manual triggering
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout 🛎️
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js 🔧
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install dependencies 📦
         run: npm ci
 
-      - name: Build
+      - name: Build 🏗️
         run: npm run build
 
-      - name: Create .nojekyll file
+      - name: Create .nojekyll file 📄
         run: touch dist/.nojekyll
 
-      - name: Deploy
+      - name: Add mobile fixes and hide GitHub corner 🎨
+        run: |
+          cat << EOF > dist/mobile-fixes.css
+          @media (max-width: 768px) {
+            .performance-area {
+              grid-template-columns: 1fr !important;
+              padding: 1rem !important;
+              gap: 1rem !important;
+            }
+            .controls {
+              flex-wrap: wrap !important;
+              justify-content: center !important;
+              padding: 0.75rem !important;
+            }
+            .button {
+              padding: 0.5rem 1rem !important;
+              font-size: 0.9rem !important;
+              margin: 0.25rem !important;
+            }
+            .webcam-container {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 auto !important;
+            }
+            .status-panel {
+              flex-direction: column !important;
+            }
+            .body-parts-panel, .music-controls {
+              padding: 1rem !important;
+            }
+            body {
+              overflow-x: hidden;
+            }
+          }
+          .github-corner {
+            display: none !important;
+          }
+          EOF
+          
+          # Ensure viewport meta tag is set correctly
+          sed -i 's/<meta name="viewport".*\/>/<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">/' dist/index.html
+          
+          # Add mobile fixes CSS and hide GitHub corner
+          sed -i 's/<\/head>/<link rel="stylesheet" href="mobile-fixes.css"><style>.github-corner{display:none!important;}<\/style><\/head>/' dist/index.html
+
+      - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
           branch: gh-pages
+          clean: true  # Automatically remove deleted files from the deploy branch
