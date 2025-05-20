@@ -40,7 +40,7 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
   const webcamRef = useRef<any>(null)
   
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
-  const { generateMusic, stopMusic, currentPreset } = useMusicGeneration()
+  const { generateMusic, stopMusic, currentPreset, isMobile } = useMusicGeneration()
 
   useEffect(() => {
     if (isPerforming && poses) {
@@ -61,15 +61,47 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       if (isPerforming) {
         stopDetection()
         stopMusic()
-      } else {
+        setIsPerforming(false)
+        return
+      }
+      
+      // Initialize audio properly for this device type
+      try {
+        console.log('Setting up audio context before starting performance...')
+        
+        // Create a new context with appropriate settings based on device
+        Tone.setContext(new Tone.Context({
+          latencyHint: isMobile ? 'interactive' : 'balanced',
+          lookAhead: isMobile ? 0.1 : 0.2,
+          updateInterval: isMobile ? 0.03 : 0.05
+        }))
+        
         // Start Tone.js audio context on user interaction
         await Tone.start()
-        console.log('Started Tone.js context')
-        
-        await startDetection()
+        console.log('Started Tone.js context successfully')
+      } catch (audioErr) {
+        console.warn('Audio initialization warning:', audioErr)
+        // Try to recover by resuming the current context
+        try {
+          await Tone.context.resume()
+          console.log('Resumed existing audio context')
+        } catch (resumeErr) {
+          console.error('Could not resume audio context:', resumeErr)
+          throw new Error('Could not initialize audio. Please try again.')
+        }
       }
-      setIsPerforming(!isPerforming)
+      
+      try {
+        // Now start pose detection
+        await startDetection()
+        console.log('Pose detection started successfully')
+        setIsPerforming(true)
+      } catch (detectionErr) {
+        console.error('Detection error:', detectionErr)
+        throw new Error('Could not start pose detection. Please check camera permissions.')
+      }
     } catch (err: any) {
+      console.error('Performance start error:', err)
       setError(err.message || 'Failed to start performance')
     }
   }
@@ -83,6 +115,12 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         <button onClick={handleTogglePerformance} className="button">
           {isPerforming ? 'Stop' : 'Start'} Performance
         </button>
+        
+        {isMobile && (
+          <div className="mobile-mode-indicator">
+            <span>📱</span> Mobile Optimized
+          </div>
+        )}
       </div>
       
       {error && (

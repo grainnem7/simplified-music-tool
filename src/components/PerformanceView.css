@@ -15,6 +15,24 @@
   background: var(--bg-secondary);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 10;
+  position: relative;
+}
+
+.mobile-mode-indicator {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-color);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 0 0 8px 8px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9;
 }
 
 .performance-area {
@@ -153,12 +171,18 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 1rem;
+    margin-bottom: 1.5rem; /* Space for mobile indicator */
   }
   
   .button {
     padding: 0.6rem 1rem;
     font-size: 0.9rem;
     margin: 0.25rem;
+  }
+  
+  .mobile-mode-indicator {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
   }
   
   .performance-area {

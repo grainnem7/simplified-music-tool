@@ -138,9 +138,36 @@ src/
 
 - MoveNet LIGHTNING model chosen for speed over accuracy
 - Single pose detection (not multi-pose) for performance
-- 60fps target for smooth interaction
+- 60fps target for smooth interaction on desktop, 15-30fps on mobile
 - Minimize state updates during performance
 - Use React.memo for expensive components
+- Adaptive throttling for mobile devices
+- Reduced audio complexity on mobile
+
+### Mobile Optimizations
+
+The application includes specific optimizations for mobile devices:
+
+1. **Detection Throttling**:
+   - Adaptive pose detection interval (150-300ms) based on device performance
+   - Reduced resolution and frame rate for webcam capture
+   - Higher confidence thresholds for keypoints (0.4 vs 0.3 on desktop)
+   - Limited number of keypoints processed
+
+2. **Audio Optimizations**:
+   - Reduced polyphony (2-4 voices vs 8 on desktop)
+   - Shorter note durations (16n vs 8n on desktop)
+   - Simpler waveforms (sine/triangle vs more complex waveforms)
+   - Lower latency settings with interactive mode
+   - Faster envelopes with shorter attack/release times
+   - Reduced chord frequency (every 3s vs 2s on desktop)
+   - Dedicated 'mobile-optimized' preset with minimal audio requirements
+
+3. **UI Adaptations**:
+   - Mobile-specific layout and styling
+   - Mobile detection indicator
+   - Simplified visualizations
+   - Auto-selection of mobile-optimized preset
 
 ### Known Issues & Limitations
 
@@ -149,6 +176,7 @@ src/
 3. Pose detection accuracy drops with poor lighting
 4. Some browsers limit Web Audio API features
 5. Performance varies significantly on mobile devices
+6. Older/lower-end mobile devices may experience lag even with optimizations
 
 ### Current Development State
 

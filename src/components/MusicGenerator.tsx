@@ -1,6 +1,6 @@
 import './MusicGenerator.css'
 import * as Tone from 'tone'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import { Pose } from '@tensorflow-models/pose-detection'
 
@@ -12,29 +12,66 @@ interface MusicGeneratorProps {
 
 function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorProps) {
   const [testStatus, setTestStatus] = useState<string>('')
-  const { generateMusic, selectPreset, currentPreset, testSound } = useMusicGeneration()
+  const { generateMusic, selectPreset, currentPreset, testSound, isMobile } = useMusicGeneration()
   
-  const presets = [
+  // Base presets available on all devices
+  const basePresets = [
     { name: 'piano', label: 'Piano', description: 'Classic piano sounds' },
-    { name: 'drums', label: 'Drums', description: 'Percussion kit' },
-    { name: 'synth', label: 'Synthesizer', description: 'Electronic sounds' }
+    { name: 'synth', label: 'Synthesizer', description: 'Electronic sounds' },
   ]
+  
+  // Add mobile-optimized preset if on mobile
+  const presets = isMobile
+    ? [
+        ...basePresets,
+        { name: 'mobile-optimized', label: 'Mobile', description: 'Optimized for mobile performance' }
+      ]
+    : [
+        ...basePresets,
+        { name: 'drums', label: 'Drums', description: 'Percussion kit' }
+      ]
+      
+  // Auto-select mobile-optimized preset on mobile devices
+  useEffect(() => {
+    if (isMobile) {
+      selectPreset('mobile-optimized')
+    }
+  }, [isMobile, selectPreset])
   
   const handleTestSound = async () => {
     setTestStatus('Testing...')
     
     try {
+      // Create a clean context first
+      try {
+        // Create a new context with appropriate settings for the device type
+        Tone.setContext(new Tone.Context({
+          latencyHint: isMobile ? 'interactive' : 'balanced',
+          lookAhead: isMobile ? 0.1 : 0.2,
+          updateInterval: isMobile ? 0.03 : 0.05
+        }))
+      } catch (e) {
+        console.warn('Could not create custom audio context, using default')
+      }
+      
       // Ensure Tone.js is started on user interaction
-      if (Tone.context.state !== 'running') {
-        await Tone.start()
+      try {
+        if (Tone.context.state !== 'running') {
+          await Tone.start()
+        }
+      } catch (e) {
+        console.warn('Error starting Tone context:', e)
+        // Try to recover with a direct resume
+        await Tone.context.resume()
       }
       
       await testSound()
+      setTestStatus('Success')
       setTimeout(() => setTestStatus(''), 1000)
     } catch (error) {
       console.error('Test sound error:', error)
-      setTestStatus('Error')
-      setTimeout(() => setTestStatus(''), 2000)
+      setTestStatus('Error - Try again')
+      setTimeout(() => setTestStatus(''), 3000)
     }
   }
 

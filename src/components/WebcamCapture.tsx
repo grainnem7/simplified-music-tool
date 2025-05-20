@@ -18,10 +18,16 @@ const formatKeypointName = (name: string): string => {
 const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
+  // Check if we're on a mobile device
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (window.innerWidth <= 768)
+    
+  // Adjust video constraints based on device
   const videoConstraints = {
-    width: 640,
-    height: 480,
-    facingMode: "user"
+    width: isMobile ? 480 : 640,
+    height: isMobile ? 360 : 480,
+    facingMode: "user",
+    frameRate: isMobile ? { ideal: 15, max: 30 } : { ideal: 30, max: 60 }
   }
 
   useEffect(() => {
@@ -50,17 +56,26 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
       ]
       
       const pose = poses[0]
+      // Get colors from theme
+      const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color')
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+      const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary')
       
-      // Draw connections
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color')
+      // Mobile optimization flag
+      const simplifiedRendering = isMobile
+      
+      // Draw connections for skeleton
+      ctx.strokeStyle = accentColor
       ctx.globalAlpha = 0.6
-      ctx.lineWidth = 3
+      ctx.lineWidth = simplifiedRendering ? 2 : 3
       
       connections.forEach(([start, end]) => {
         const startKeypoint = pose.keypoints.find((kp: any) => kp.name === start)
         const endKeypoint = pose.keypoints.find((kp: any) => kp.name === end)
         
-        if (startKeypoint?.score > 0.3 && endKeypoint?.score > 0.3) {
+        // Only draw connections with sufficient confidence
+        const minScore = simplifiedRendering ? 0.2 : 0.3
+        if (startKeypoint?.score > minScore && endKeypoint?.score > minScore) {
           const startX = (1 - startKeypoint.x) * canvas.width
           const startY = startKeypoint.y * canvas.height
           const endX = (1 - endKeypoint.x) * canvas.width
@@ -77,41 +92,48 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
 
       // Draw keypoints
       pose.keypoints.forEach((keypoint: any) => {
-        if (keypoint.score > 0.3) {
+        const minScore = simplifiedRendering ? 0.2 : 0.3
+        if (keypoint.score > minScore) {
           // Convert normalized coordinates to canvas coordinates
           const x = (1 - keypoint.x) * canvas.width  // Mirror X coordinate
           const y = keypoint.y * canvas.height
           
-          // Draw keypoint - use accent color from theme
-          ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color')
+          // Draw keypoint dot
+          ctx.fillStyle = accentColor
           ctx.beginPath()
-          ctx.arc(x, y, 8, 0, 2 * Math.PI)
+          ctx.arc(x, y, simplifiedRendering ? 6 : 8, 0, 2 * Math.PI)
           ctx.fill()
           
-          // Add a white border for better visibility
-          ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
-          ctx.lineWidth = 2
+          // Add a border for better visibility
+          ctx.strokeStyle = textColor
+          ctx.lineWidth = simplifiedRendering ? 1 : 2
           ctx.stroke()
           
-          // Draw keypoint name with better formatting
-          if (keypoint.name) {
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
-            ctx.font = 'bold 14px Inter, system-ui, sans-serif'
+          // On mobile, only show labels for selected important body parts to reduce clutter
+          const isImportantKeypoint = !simplifiedRendering || 
+            keypoint.name?.includes('wrist') || 
+            keypoint.name?.includes('shoulder') ||
+            keypoint.name?.includes('face') ||
+            keypoint.name?.includes('hip')
+            
+          if (keypoint.name && isImportantKeypoint) {
+            const fontSize = simplifiedRendering ? 12 : 14
+            ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`
             
             // Create a background for the text
             const formattedName = formatKeypointName(keypoint.name)
             const textMetrics = ctx.measureText(formattedName)
             const textWidth = textMetrics.width
-            const textHeight = 16
-            const padding = 6
+            const textHeight = fontSize + 2
+            const padding = simplifiedRendering ? 4 : 6
             const borderRadius = 4
             
             // Position text to avoid overlapping with the dot
-            const textX = x + 15
-            const textY = y - 10
+            const textX = x + (simplifiedRendering ? 10 : 15)
+            const textY = y - (simplifiedRendering ? 8 : 10)
             
-            // Draw rounded rectangle background
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary')
+            // Draw background for text
+            ctx.fillStyle = bgColor
             ctx.globalAlpha = 0.9
             ctx.beginPath()
             
@@ -137,13 +159,13 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
             ctx.globalAlpha = 1.0
             
             // Draw text
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+            ctx.fillStyle = textColor
             ctx.fillText(formattedName, textX, textY)
           }
         }
       })
     }
-  }, [poses])
+  }, [poses, isMobile])
 
   return (
     <div className="webcam-container">
