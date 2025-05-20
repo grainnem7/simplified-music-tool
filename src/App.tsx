@@ -4,6 +4,7 @@ import WelcomeScreen from './components/WelcomeScreen'
 import SetupScreen from './components/SetupScreen'
 import PerformanceView from './components/PerformanceView'
 import ThemeSelector from './components/ThemeSelector'
+import GithubCorner from './components/GithubCorner'
 import { ThemeProvider } from './contexts/ThemeContext'
 
 type AppState = 'welcome' | 'setup' | 'performance'
@@ -31,6 +32,7 @@ function App() {
         <header className="app-header">
           <ThemeSelector />
         </header>
+        <GithubCorner repositoryUrl="https://github.com/grainnem7/simplified-music-tool" />
         <main id="main-content">
           {currentState === 'welcome' && <WelcomeScreen onStart={handleStart} />}
           {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
