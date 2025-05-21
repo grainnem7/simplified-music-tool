@@ -37,20 +37,9 @@
   filter: brightness(1.2);
 }
 
-/* Pulse animation for active parts */
+/* Static highlight for active parts */
 .body-point-glow {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.2);
-  }
+  opacity: 0.6;
 }
 
 /* Labels */

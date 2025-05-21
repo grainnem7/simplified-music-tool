@@ -23,7 +23,9 @@ function SetupScreen({ onComplete }: SetupScreenProps) {
       <div className="setup-content">
         <div className="diagram-section">
           <BodyDiagram selectedParts={selectedParts} />
-          <p className="diagram-caption">Selected parts are highlighted</p>
+          <p className="diagram-caption">
+            Selected parts are highlighted.
+          </p>
         </div>
         
         <div className="selector-section">

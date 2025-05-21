@@ -391,12 +391,69 @@ export function useMusicGeneration() {
     }
   }, [])
 
+  const updateSoundSettings = useCallback((settings: {
+    attack?: number;
+    decay?: number;
+    sustain?: number;
+    release?: number;
+    volume?: number;
+    oscillatorType?: string;
+    maxPolyphony?: number;
+  }) => {
+    if (!synthRef.current) {
+      console.warn('Cannot update sound settings: synth not initialized')
+      return false
+    }
+
+    try {
+      const { attack, decay, sustain, release, volume, oscillatorType, maxPolyphony } = settings
+
+      // Update envelope parameters if provided
+      const envelopeSettings: Record<string, number> = {}
+      if (attack !== undefined) envelopeSettings.attack = attack
+      if (decay !== undefined) envelopeSettings.decay = decay
+      if (sustain !== undefined) envelopeSettings.sustain = sustain
+      if (release !== undefined) envelopeSettings.release = release
+
+      // Apply envelope changes if any were provided
+      if (Object.keys(envelopeSettings).length > 0) {
+        synthRef.current.set({
+          envelope: envelopeSettings
+        })
+      }
+
+      // Update oscillator type if provided
+      if (oscillatorType) {
+        synthRef.current.set({
+          oscillator: { type: oscillatorType }
+        })
+      }
+
+      // Update volume if provided
+      if (volume !== undefined) {
+        synthRef.current.volume.value = volume
+      }
+
+      // Update max polyphony if provided
+      if (maxPolyphony !== undefined) {
+        synthRef.current.options.maxPolyphony = maxPolyphony
+      }
+
+      console.log('Sound settings updated successfully')
+      return true
+    } catch (error) {
+      console.error('Failed to update sound settings:', error)
+      return false
+    }
+  }, [])
+
   return { 
     generateMusic, 
     stopMusic, 
     selectPreset, 
     currentPreset, 
     testSound,
+    updateSoundSettings,
     isMobile: isMobileDevice.current // Expose mobile status for UI optimizations
   }
 }

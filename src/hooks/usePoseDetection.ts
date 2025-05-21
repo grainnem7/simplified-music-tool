@@ -161,6 +161,7 @@ export function usePoseDetection(webcamRef: React.RefObject<any>) {
   const stopDetection = useCallback(() => {
     console.log('Stopping pose detection...')
     setIsDetecting(false)
+    setPoses(null)
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
     }

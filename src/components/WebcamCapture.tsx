@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useEffect } from 'react'
+import { forwardRef, useRef, useEffect, useState } from 'react'
 import Webcam from 'react-webcam'
 import './WebcamCapture.css'
 
@@ -17,6 +17,7 @@ const formatKeypointName = (name: string): string => {
 
 const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [showLabels, setShowLabels] = useState(false)
   
   // Check if we're on a mobile device
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -31,13 +32,18 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
   }
 
   useEffect(() => {
-    if (poses && poses.length > 0 && canvasRef.current) {
+    if (canvasRef.current) {
       const canvas = canvasRef.current
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height)
+      
+      // If no poses or empty poses array, just leave canvas clear and return
+      if (!poses || poses.length === 0) {
+        return
+      }
       
       // Define skeleton connections
       const connections = [
@@ -70,6 +76,11 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
       ctx.lineWidth = simplifiedRendering ? 2 : 3
       
       connections.forEach(([start, end]) => {
+        // Skip connections involving ear keypoints
+        if (start.includes('ear') || end.includes('ear')) {
+          return; // Skip ear connections
+        }
+        
         const startKeypoint = pose.keypoints.find((kp: any) => kp.name === start)
         const endKeypoint = pose.keypoints.find((kp: any) => kp.name === end)
         
@@ -98,6 +109,12 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
           const x = (1 - keypoint.x) * canvas.width  // Mirror X coordinate
           const y = keypoint.y * canvas.height
           
+          // Only draw keypoints for trackable body parts
+          // Filter out ear keypoints as they were removed from tracking
+          if (keypoint.name?.includes('ear')) {
+            return; // Skip ear keypoints
+          }
+          
           // Draw keypoint dot
           ctx.fillStyle = accentColor
           ctx.beginPath()
@@ -109,20 +126,38 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
           ctx.lineWidth = simplifiedRendering ? 1 : 2
           ctx.stroke()
           
-          // On mobile, only show labels for selected important body parts to reduce clutter
-          const isImportantKeypoint = !simplifiedRendering || 
-            keypoint.name?.includes('wrist') || 
-            keypoint.name?.includes('shoulder') ||
-            keypoint.name?.includes('face') ||
-            keypoint.name?.includes('hip')
+          // Only show labels if the toggle is on
+          if (!showLabels) {
+            return; // Skip drawing labels if toggle is off
+          }
+          
+          // Skip ear keypoints as they were excluded from tracking
+          const keypointName = keypoint.name?.toLowerCase() || '';
+          if (keypointName.includes('ear')) {
+            return; // Skip ear labels
+          }
             
-          if (keypoint.name && isImportantKeypoint) {
+          // Draw labels for all valid keypoints
+          if (keypoint.name) {
             const fontSize = simplifiedRendering ? 12 : 14
             ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`
             
             // Create a background for the text
-            const formattedName = formatKeypointName(keypoint.name)
-            const textMetrics = ctx.measureText(formattedName)
+            // Format names to match body part selector
+            let displayName;
+            
+            if (keypoint.name.toLowerCase().includes('nose')) {
+              displayName = 'Head';
+            } else if (keypoint.name.toLowerCase().includes('left_eye') || keypoint.name.toLowerCase().includes('lefteye')) {
+              displayName = 'Left Eye';
+            } else if (keypoint.name.toLowerCase().includes('right_eye') || keypoint.name.toLowerCase().includes('righteye')) {
+              displayName = 'Right Eye';
+            } else {
+              // Format other keypoints like shoulders, wrists, etc.
+              displayName = formatKeypointName(keypoint.name);
+            }
+            
+            const textMetrics = ctx.measureText(displayName)
             const textWidth = textMetrics.width
             const textHeight = fontSize + 2
             const padding = simplifiedRendering ? 4 : 6
@@ -160,12 +195,12 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
             
             // Draw text
             ctx.fillStyle = textColor
-            ctx.fillText(formattedName, textX, textY)
+            ctx.fillText(displayName, textX, textY)
           }
         }
       })
     }
-  }, [poses, isMobile])
+  }, [poses, isMobile, showLabels]) // Will re-run when poses changes to null
 
   return (
     <div className="webcam-container">
@@ -182,6 +217,14 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
         height={480}
         className="webcam-canvas"
       />
+      <button 
+        className="labels-toggle"
+        onClick={() => setShowLabels(!showLabels)}
+        aria-label={showLabels ? "Hide labels" : "Show labels"}
+        title={showLabels ? "Hide labels" : "Show labels"}
+      >
+        {showLabels ? "Hide Labels" : "Show Labels"}
+      </button>
     </div>
   )
 })

@@ -7,13 +7,11 @@ interface BodyPartSelectorProps {
 
 const BODY_PART_GROUPS = {
   face: {
-    label: 'Face',
+    label: 'Head',
     parts: [
-      { id: 'nose', label: 'Nose' },
+      { id: 'nose', label: 'Head' },
       { id: 'leftEye', label: 'Left Eye' },
       { id: 'rightEye', label: 'Right Eye' },
-      { id: 'leftEar', label: 'Left Ear' },
-      { id: 'rightEar', label: 'Right Ear' },
     ]
   },
   upper: {

@@ -17,7 +17,7 @@ $newIndexContent = @"
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/simplified-music-tool/assets/vite-4391efe2.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Transform your movements into music using AI with customizable body part tracking and multiple accessibility themes" />
+    <meta name="description" content="Create music using your body movements with customisable body part tracking" />
     <meta name="theme-color" content="#1a1a1a" />
     <title>Movement to Music AI - Accessible Motion-Based Music Generation</title>
     <script type="module" crossorigin src="/simplified-music-tool/assets/index-e7585ebc.js"></script>

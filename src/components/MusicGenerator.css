@@ -4,44 +4,7 @@
   gap: 1rem;
 }
 
-.preset-selection {
-  margin-bottom: 1rem;
-}
-
-.preset-selection h4 {
-  margin: 0 0 0.5rem 0;
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.preset-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.preset-button {
-  padding: 0.5rem 1rem;
-  border: 2px solid var(--border-color);
-  background: transparent;
-  color: var(--text-primary);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.preset-button:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--accent-color);
-}
-
-.preset-button.active {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
+/* Preset selection removed */
 
 .status {
   display: flex;
@@ -92,7 +55,8 @@
   justify-content: center;
 }
 
-.test-button {
+.test-button, 
+.settings-button {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color);
   background: transparent;
@@ -101,6 +65,10 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.settings-button {
+  background-color: var(--bg-tertiary);
 }
 
 .test-button:hover {
@@ -160,14 +128,4 @@
   color: var(--text-secondary);
 }
 
-.preset-info {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-style: italic;
-  margin-top: 0.5rem;
-}
-
-.preset-info p {
-  margin: 0;
-}
+/* Preset info removed */

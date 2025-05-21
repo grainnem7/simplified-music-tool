@@ -42,7 +42,7 @@
   --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* High Contrast Mode */
+/* High Contrast Mode - Improved for better readability */
 :root[data-theme="highContrast"] {
   --bg-primary: #000000;
   --bg-secondary: #1a1a1a;
@@ -52,12 +52,13 @@
   --text-tertiary: #cccccc;
   --border-color: #ffffff;
   --button-bg: #ffffff;
-  --button-bg-hover: #cccccc;
+  --button-bg-hover: #d0d0d0;
   --button-text: #000000;
-  --accent-color: #ffff00;
-  --success-color: #00ff00;
-  --error-color: #ff0000;
-  --warning-color: #ffaa00;
+  --accent-color: #0066ff; /* Changed from yellow to strong blue */
+  --accent-text: #ffffff; /* Text on accent background */
+  --success-color: #00aa00; /* Darker green for better contrast */
+  --error-color: #dd0000; /* Slightly darker red */
+  --warning-color: #ff6600; /* Darker orange */
   --input-bg: #000000;
   --input-border: #ffffff;
   --overlay-bg: rgba(0, 0, 0, 0.95);
@@ -122,12 +123,52 @@ select:focus {
   border-width: 2px;
 }
 
+/* Ensure buttons with accent-color background have appropriate text color */
+[data-theme="highContrast"] button.primary-button,
+[data-theme="highContrast"] .button.primary,
+[data-theme="highContrast"] .continue-button,
+[data-theme="highContrast"] .button[type="submit"] {
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+  border-color: white;
+}
+
+/* Handle active state for buttons */
+[data-theme="highContrast"] .active,
+[data-theme="highContrast"] .preset-button.active,
+[data-theme="highContrast"] button.active {
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+  border-color: white;
+}
+
 [data-theme="highContrast"] input[type="checkbox"] {
   border: 2px solid var(--border-color);
 }
 
 [data-theme="highContrast"] *:focus {
   outline-width: 3px;
+}
+
+/* Ensure visual elements have proper contrast */
+[data-theme="highContrast"] .body-point.active {
+  fill: var(--accent-color);
+  stroke: white;
+  stroke-width: 3px;
+}
+
+[data-theme="highContrast"] .status.active {
+  background-color: var(--accent-color);
+  color: var(--accent-text);
+}
+
+[data-theme="highContrast"] .visualization-bar {
+  background-color: var(--accent-color);
+}
+
+/* Ensure text on accent color backgrounds has proper contrast */
+[data-theme="highContrast"] .status-icon {
+  background-color: var(--accent-text);
 }
 
 /* Accessibility improvements */

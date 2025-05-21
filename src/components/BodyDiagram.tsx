@@ -5,12 +5,10 @@ interface BodyDiagramProps {
 }
 
 const BODY_PART_POSITIONS: Record<string, { x: number; y: number; label: string }> = {
-  // Face
-  nose: { x: 100, y: 40, label: 'Nose' },
+  // Face/Head
+  nose: { x: 100, y: 40, label: 'Head' },
   leftEye: { x: 90, y: 35, label: 'L Eye' },
   rightEye: { x: 110, y: 35, label: 'R Eye' },
-  leftEar: { x: 80, y: 40, label: 'L Ear' },
-  rightEar: { x: 120, y: 40, label: 'R Ear' },
   
   // Upper body
   leftShoulder: { x: 70, y: 80, label: 'L Shoulder' },
@@ -71,18 +69,7 @@ function BodyDiagram({ selectedParts }: BodyDiagramProps) {
                 r="6"
                 className={`body-point ${isSelected ? 'active' : ''}`}
               />
-              {isSelected && (
-                <circle
-                  cx={position.x}
-                  cy={position.y}
-                  r="8"
-                  fill="none"
-                  stroke="var(--accent-color)"
-                  strokeWidth="2"
-                  opacity="0.6"
-                  className="body-point-glow"
-                />
-              )}
+              {/* Static highlight instead of animation */}
               <text
                 x={position.x}
                 y={position.y - 10}

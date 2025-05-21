@@ -1,0 +1,270 @@
+.advanced-settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.advanced-settings-container {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  width: 95%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-header {
+  background: var(--bg-tertiary);
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.settings-header h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.tabs button {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabs button:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-color);
+}
+
+.tabs button.active {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.global-settings,
+.body-part-settings {
+  padding: 2rem;
+}
+
+.global-settings h3,
+.body-part-settings h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+}
+
+.settings-group {
+  margin-bottom: 1.5rem;
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.settings-group select,
+.settings-group input[type="text"],
+.settings-group input[type="number"] {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.settings-group input[type="range"] {
+  width: 100%;
+  margin: 0.5rem 0;
+  accent-color: var(--accent-color);
+}
+
+.axis-mappings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.preset-buttons {
+  margin-bottom: 2rem;
+}
+
+.preset-buttons label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.preset-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.preset-button {
+  padding: 0.6rem 1rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-button:hover {
+  background: var(--bg-primary);
+  border-color: var(--accent-color);
+}
+
+.apply-to-all {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.apply-to-all:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-color);
+  position: sticky;
+  bottom: 0;
+}
+
+.cancel-button,
+.apply-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-button {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-button:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.apply-button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+}
+
+.apply-button:hover {
+  opacity: 0.9;
+}
+
+/* High contrast mode adjustments */
+[data-theme="highContrast"] .advanced-settings-container {
+  border: 2px solid white;
+}
+
+[data-theme="highContrast"] .settings-group select,
+[data-theme="highContrast"] .settings-group input {
+  border: 2px solid white;
+}
+
+[data-theme="highContrast"] .cancel-button {
+  border: 2px solid white;
+  color: white;
+}
+
+[data-theme="highContrast"] .apply-button {
+  border: 2px solid white;
+}
+
+[data-theme="highContrast"] .preset-button {
+  border: 2px solid white;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .advanced-settings-container {
+    width: 98%;
+    max-height: 95vh;
+  }
+  
+  .global-settings,
+  .body-part-settings {
+    padding: 1.25rem;
+  }
+  
+  .axis-mappings {
+    grid-template-columns: 1fr;
+  }
+  
+  .tabs button {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.8rem;
+  }
+  
+  .buttons-container {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .cancel-button,
+  .apply-button {
+    width: 100%;
+  }
+}

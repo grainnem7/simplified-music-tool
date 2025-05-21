@@ -12,26 +12,9 @@ interface MusicGeneratorProps {
 
 function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorProps) {
   const [testStatus, setTestStatus] = useState<string>('')
-  const { generateMusic, selectPreset, currentPreset, testSound, isMobile } = useMusicGeneration()
+  const { generateMusic, selectPreset, testSound, isMobile } = useMusicGeneration()
   
-  // Base presets available on all devices
-  const basePresets = [
-    { name: 'piano', label: 'Piano', description: 'Classic piano sounds' },
-    { name: 'synth', label: 'Synthesizer', description: 'Electronic sounds' },
-  ]
-  
-  // Add mobile-optimized preset if on mobile
-  const presets = isMobile
-    ? [
-        ...basePresets,
-        { name: 'mobile-optimized', label: 'Mobile', description: 'Optimized for mobile performance' }
-      ]
-    : [
-        ...basePresets,
-        { name: 'drums', label: 'Drums', description: 'Percussion kit' }
-      ]
-      
-  // Auto-select mobile-optimized preset on mobile devices
+  // Auto-select mobile-optimized preset for mobile devices
   useEffect(() => {
     if (isMobile) {
       selectPreset('mobile-optimized')
@@ -77,22 +60,7 @@ function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorPr
 
   return (
     <div className="music-generator">
-      {/* Preset Selection */}
-      <div className="preset-selection">
-        <h4>Sound Preset</h4>
-        <div className="preset-buttons">
-          {presets.map(preset => (
-            <button
-              key={preset.name}
-              onClick={() => selectPreset(preset.name)}
-              className={`preset-button ${currentPreset === preset.name ? 'active' : ''}`}
-              title={preset.description}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Preset selection removed */}
       
       <div className={`status ${isActive ? 'active' : ''}`}>
         <span className="status-icon"></span>
@@ -135,10 +103,7 @@ function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorPr
         )}
       </div>
       
-      {/* Preset info */}
-      <div className="preset-info">
-        <p>{presets.find(p => p.name === currentPreset)?.description}</p>
-      </div>
+      {/* Sound settings removed for now, will be reintroduced later */}
     </div>
   )
 }
