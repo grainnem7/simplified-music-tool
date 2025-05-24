@@ -60,14 +60,27 @@ export const initializeHandDetector = async (): Promise<handPoseDetection.HandDe
   console.log('Creating MediaPipe Hands detector...');
   const model = handPoseDetection.SupportedModels.MediaPipeHands;
   const detectorConfig: handPoseDetection.MediaPipeHandsDetectorConfig = {
-    runtime: 'tfjs',  // Changed from 'mediapipe' to 'tfjs' for better compatibility
-    modelType: 'full', // 'full' for better accuracy, 'lite' for mobile
+    runtime: 'mediapipe',  // Use MediaPipe runtime for better accuracy
+    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
+    modelType: 'full', // Full model for better finger detection
     maxHands: 2,
   };
 
   try {
     handDetector = await handPoseDetection.createDetector(model, detectorConfig);
     console.log('MediaPipe Hands detector created successfully');
+    
+    // Test the detector is working
+    const testCanvas = document.createElement('canvas');
+    testCanvas.width = 1;
+    testCanvas.height = 1;
+    try {
+      await handDetector.estimateHands(testCanvas);
+      console.log('Hand detector test successful');
+    } catch (testErr) {
+      console.log('Hand detector test failed (this is normal):', testErr);
+    }
+    
     return handDetector;
   } catch (error) {
     console.error('Failed to create hand detector:', error);
@@ -84,12 +97,26 @@ export const detectHands = async (
   }
 
   try {
+    // Validate video element
+    if (!videoElement.videoWidth || !videoElement.videoHeight) {
+      console.warn('Video element not ready:', {
+        width: videoElement.videoWidth,
+        height: videoElement.videoHeight,
+        readyState: videoElement.readyState
+      });
+      return [];
+    }
+
     const hands = await handDetector.estimateHands(videoElement, {
       flipHorizontal
     });
 
+    // Log when hands are detected
     if (hands.length > 0) {
-      console.log('Raw hands detected:', hands);
+      console.log(`MediaPipe detected ${hands.length} hand(s)`);
+      hands.forEach((hand, idx) => {
+        console.log(`Hand ${idx}: handedness=${hand.handedness}, keypoints=${hand.keypoints.length}`);
+      });
     }
 
     // Convert to our Hand format

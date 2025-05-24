@@ -18,13 +18,14 @@ export const useHandDetection = (webcamRef: React.RefObject<any>): UseHandDetect
   
   const detectorRef = useRef<handPoseDetection.HandDetector | null>(null);
   const animationIdRef = useRef<number | null>(null);
+  const isDetectingRef = useRef(false);
 
   const detect = useCallback(async () => {
-    if (!webcamRef.current || !detectorRef.current || !isDetecting) {
+    if (!webcamRef.current || !detectorRef.current || !isDetectingRef.current) {
       console.log('Detection skip:', { 
         hasWebcam: !!webcamRef.current, 
         hasDetector: !!detectorRef.current, 
-        isDetecting 
+        isDetecting: isDetectingRef.current 
       });
       return;
     }
@@ -32,15 +33,15 @@ export const useHandDetection = (webcamRef: React.RefObject<any>): UseHandDetect
     try {
       const video = webcamRef.current.video || webcamRef.current as HTMLVideoElement;
       
-      // Make sure video is ready
-      if (video.readyState !== 4) {
+      // Make sure video is ready and has valid dimensions
+      if (video.readyState !== 4 || video.videoWidth === 0 || video.videoHeight === 0) {
         animationIdRef.current = requestAnimationFrame(detect);
         return;
       }
 
       const detectedHands = await detectHands(video, true);
-      if (detectedHands.length > 0) {
-        console.log('Hands detected:', detectedHands.length, 'hands');
+      if (detectedHands && detectedHands.length > 0) {
+        console.log('Hand detection success:', detectedHands.length, 'hands');
       }
       setHands(detectedHands);
     } catch (err) {
@@ -49,7 +50,7 @@ export const useHandDetection = (webcamRef: React.RefObject<any>): UseHandDetect
 
     // Continue detection loop
     animationIdRef.current = requestAnimationFrame(detect);
-  }, [webcamRef, isDetecting]);
+  }, [webcamRef]);
 
   const startDetection = useCallback(async () => {
     try {
@@ -63,9 +64,13 @@ export const useHandDetection = (webcamRef: React.RefObject<any>): UseHandDetect
       }
 
       setIsDetecting(true);
+      isDetectingRef.current = true;
       
-      // Start detection loop
-      detect();
+      console.log('Starting detection loop, isDetecting:', true);
+      // Start detection loop with minimal delay
+      setTimeout(() => {
+        detect();
+      }, 100); // Reduced from 500ms
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start hand detection');
       console.error('Failed to start hand detection:', err);
@@ -76,6 +81,7 @@ export const useHandDetection = (webcamRef: React.RefObject<any>): UseHandDetect
 
   const stopDetection = useCallback(() => {
     setIsDetecting(false);
+    isDetectingRef.current = false;
     
     if (animationIdRef.current) {
       cancelAnimationFrame(animationIdRef.current);

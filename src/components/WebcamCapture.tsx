@@ -260,36 +260,8 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
       })
     }
     
-    // For debugging - log when selectedBodyParts change
-    console.log(`Selected body parts (${selectedBodyParts.length}):`, selectedBodyParts);
   }, [poses, isMobile, showLabels, selectedBodyParts]) // Will re-run when poses or selectedBodyParts change
 
-  // Extract hand positions from poses for harp overlay
-  const getHandPositions = () => {
-    if (!poses || poses.length === 0) return undefined;
-    
-    const pose = poses[0];
-    const leftWrist = pose.keypoints.find((kp: any) => kp.name === 'left_wrist');
-    const rightWrist = pose.keypoints.find((kp: any) => kp.name === 'right_wrist');
-    
-    const handPositions: { left?: { x: number; y: number }, right?: { x: number; y: number } } = {};
-    
-    if (leftWrist && leftWrist.score > 0.3) {
-      handPositions.left = {
-        x: (1 - leftWrist.x) * 640, // Mirror and scale to canvas width
-        y: leftWrist.y * 480
-      };
-    }
-    
-    if (rightWrist && rightWrist.score > 0.3) {
-      handPositions.right = {
-        x: (1 - rightWrist.x) * 640, // Mirror and scale to canvas width
-        y: rightWrist.y * 480
-      };
-    }
-    
-    return handPositions;
-  };
 
   return (
     <div className="webcam-container">
@@ -310,7 +282,6 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
         <HarpOverlay
           width={640}
           height={480}
-          handPositions={getHandPositions()}
           fingertipPositions={fingertipPositions}
           onStringPlucked={onHarpStringPlucked}
           pedalPositions={harpPedalPositions}

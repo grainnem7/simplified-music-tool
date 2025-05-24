@@ -46,40 +46,53 @@ export const getActualNote = (baseNote: string, pedalPositions: PedalPositions):
   return `${note}${modifier}${octave}`;
 };
 
-// Create a harp-like synth
+// Create a harp-like synth with increased polyphony
 export const createHarpSynth = (): Tone.PolySynth => {
-  const synth = new Tone.PolySynth(Tone.Synth, {
+  // Use AMSynth for a richer, more harp-like tone
+  const synth = new Tone.PolySynth(Tone.AMSynth, {
+    maxPolyphony: 32,  // Good balance for glissandos
     oscillator: {
-      type: 'triangle'
+      type: 'sine'
     },
     envelope: {
-      attack: 0.005,
-      decay: 0.8,
-      sustain: 0.1,
-      release: 2.5
+      attack: 0.005,     // Quick but not instant for realistic pluck
+      decay: 0.4,        // Natural decay
+      sustain: 0.08,     // Slight sustain
+      release: 1.5       // Natural ring
     },
-    volume: -12
+    modulation: {
+      type: 'sine'
+    },
+    modulationEnvelope: {
+      attack: 0.006,
+      decay: 0.3,
+      sustain: 0.5,
+      release: 0.1
+    },
+    harmonicity: 0.5,    // Creates a bell-like quality
+    volume: -8
   }).toDestination();
 
-  // Add reverb for more realistic harp sound
+  // Simple reverb for space
   const reverb = new Tone.Reverb({
     decay: 2.5,
     wet: 0.3
   }).toDestination();
-
+  
   synth.connect(reverb);
-
+  
   return synth;
 };
 
-// Play a single harp note
+// Play a single harp note with immediate timing
 export const playHarpNote = (
   synth: Tone.PolySynth,
   note: string,
-  duration: string = '8n',
+  duration: string = '2n',  // Let envelope control the actual duration
   velocity: number = 0.8
 ): void => {
-  synth.triggerAttackRelease(note, duration, undefined, velocity);
+  // Use immediate time ('+0') for lowest latency
+  synth.triggerAttackRelease(note, duration, '+0', velocity);
 };
 
 // Get all notes in the current scale based on pedal positions

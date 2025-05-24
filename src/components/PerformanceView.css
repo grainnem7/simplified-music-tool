@@ -44,6 +44,12 @@
   overflow: hidden;
 }
 
+.performance-area.harp-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .webcam-container {
   position: relative;
   background: var(--bg-secondary);

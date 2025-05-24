@@ -1,14 +1,11 @@
 .harp-pedals-container {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 10px;
-  padding: 15px;
-  color: white;
-  z-index: 20;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--text-primary);
+  margin-top: 1rem;
   min-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .pedals-label {
@@ -69,8 +66,8 @@
 .pedal {
   width: 50px;
   height: 60px;
-  background: linear-gradient(to bottom, #333, #111);
-  border: 2px solid #666;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -82,14 +79,15 @@
 }
 
 .pedal:hover {
-  border-color: #888;
-  background: linear-gradient(to bottom, #444, #222);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .pedal-letter {
   font-size: 18px;
   font-weight: bold;
-  color: white;
+  color: var(--text-primary);
 }
 
 .pedal-position {

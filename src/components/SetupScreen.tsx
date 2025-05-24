@@ -18,8 +18,8 @@ function SetupScreen({ onComplete }: SetupScreenProps) {
 
   const handleContinue = () => {
     if (selectedMode === 'harp') {
-      // For harp mode, automatically select both wrists
-      onComplete(['leftWrist', 'rightWrist'], 'harp')
+      // For harp mode, don't select any body parts (we use hand detection)
+      onComplete([], 'harp')
     } else if (selectedParts.length > 0) {
       onComplete(selectedParts, 'standard')
     }
