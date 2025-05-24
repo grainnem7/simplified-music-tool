@@ -132,7 +132,7 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       
       <div className="performance-area">
         <div className="webcam-container">
-          <WebcamCapture ref={webcamRef} poses={poses} />
+          <WebcamCapture ref={webcamRef} poses={poses} selectedBodyParts={selectedBodyParts} />
         </div>
         
         <div className="status-panel">

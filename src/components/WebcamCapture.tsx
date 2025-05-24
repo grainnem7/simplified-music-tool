@@ -4,6 +4,7 @@ import './WebcamCapture.css'
 
 interface WebcamCaptureProps {
   poses?: any[]
+  selectedBodyParts?: string[]
 }
 
 // Format keypoint names to be more user-friendly
@@ -15,7 +16,46 @@ const formatKeypointName = (name: string): string => {
     .join(' ')
 }
 
-const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) => {
+// Convert TensorFlow keypoint name to our body part ID
+const mapKeypointToBodyPartId = (keypointName: string): string => {
+  keypointName = keypointName.toLowerCase();
+  
+  if (keypointName === 'nose') {
+    return 'nose';
+  } else if (keypointName === 'left_eye') {
+    return 'leftEye';
+  } else if (keypointName === 'right_eye') {
+    return 'rightEye';
+  } else if (keypointName === 'left_shoulder') {
+    return 'leftShoulder';
+  } else if (keypointName === 'right_shoulder') {
+    return 'rightShoulder';
+  } else if (keypointName === 'left_elbow') {
+    return 'leftElbow';
+  } else if (keypointName === 'right_elbow') {
+    return 'rightElbow';
+  } else if (keypointName === 'left_wrist') {
+    return 'leftWrist';
+  } else if (keypointName === 'right_wrist') {
+    return 'rightWrist';
+  } else if (keypointName === 'left_hip') {
+    return 'leftHip';
+  } else if (keypointName === 'right_hip') {
+    return 'rightHip';
+  } else if (keypointName === 'left_knee') {
+    return 'leftKnee';
+  } else if (keypointName === 'right_knee') {
+    return 'rightKnee';
+  } else if (keypointName === 'left_ankle') {
+    return 'leftAnkle';
+  } else if (keypointName === 'right_ankle') {
+    return 'rightAnkle';
+  }
+  
+  return '';
+}
+
+const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedBodyParts = [] }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showLabels, setShowLabels] = useState(false)
   
@@ -76,9 +116,16 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
       ctx.lineWidth = simplifiedRendering ? 2 : 3
       
       connections.forEach(([start, end]) => {
-        // Skip connections involving ear keypoints
-        if (start.includes('ear') || end.includes('ear')) {
-          return; // Skip ear connections
+        
+        // Helper function to check if a keypoint is selected
+        const isKeypointSelected = (name: string) => {
+          const bodyPartId = mapKeypointToBodyPartId(name);
+          return bodyPartId && selectedBodyParts.includes(bodyPartId);
+        };
+        
+        // Skip connections if either keypoint is not selected
+        if (!isKeypointSelected(start) || !isKeypointSelected(end)) {
+          return;
         }
         
         const startKeypoint = pose.keypoints.find((kp: any) => kp.name === start)
@@ -105,15 +152,20 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
       pose.keypoints.forEach((keypoint: any) => {
         const minScore = simplifiedRendering ? 0.2 : 0.3
         if (keypoint.score > minScore) {
+          // Check if this keypoint is in the selected body parts
+          // Map TensorFlow model keypoint names to our application's body part IDs
+          const keypointName = keypoint.name || '';
+          const bodyPartId = mapKeypointToBodyPartId(keypointName);
+          const isSelected = bodyPartId && selectedBodyParts.includes(bodyPartId);
+          
+          // Skip if not selected
+          if (!isSelected) {
+            return;
+          }
+          
           // Convert normalized coordinates to canvas coordinates
           const x = (1 - keypoint.x) * canvas.width  // Mirror X coordinate
           const y = keypoint.y * canvas.height
-          
-          // Only draw keypoints for trackable body parts
-          // Filter out ear keypoints as they were removed from tracking
-          if (keypoint.name?.includes('ear')) {
-            return; // Skip ear keypoints
-          }
           
           // Draw keypoint dot
           ctx.fillStyle = accentColor
@@ -131,13 +183,7 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
             return; // Skip drawing labels if toggle is off
           }
           
-          // Skip ear keypoints as they were excluded from tracking
-          const keypointName = keypoint.name?.toLowerCase() || '';
-          if (keypointName.includes('ear')) {
-            return; // Skip ear labels
-          }
-            
-          // Draw labels for all valid keypoints
+          // Draw labels for all valid selected keypoints
           if (keypoint.name) {
             const fontSize = simplifiedRendering ? 12 : 14
             ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`
@@ -146,11 +192,12 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
             // Format names to match body part selector
             let displayName;
             
-            if (keypoint.name.toLowerCase().includes('nose')) {
+            const keypointLower = keypoint.name.toLowerCase();
+            if (keypointLower === 'nose') {
               displayName = 'Head';
-            } else if (keypoint.name.toLowerCase().includes('left_eye') || keypoint.name.toLowerCase().includes('lefteye')) {
+            } else if (keypointLower === 'left_eye') {
               displayName = 'Left Eye';
-            } else if (keypoint.name.toLowerCase().includes('right_eye') || keypoint.name.toLowerCase().includes('righteye')) {
+            } else if (keypointLower === 'right_eye') {
               displayName = 'Right Eye';
             } else {
               // Format other keypoints like shoulders, wrists, etc.
@@ -200,7 +247,10 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses }, ref) =>
         }
       })
     }
-  }, [poses, isMobile, showLabels]) // Will re-run when poses changes to null
+    
+    // For debugging - log when selectedBodyParts change
+    console.log(`Selected body parts (${selectedBodyParts.length}):`, selectedBodyParts);
+  }, [poses, isMobile, showLabels, selectedBodyParts]) // Will re-run when poses or selectedBodyParts change
 
   return (
     <div className="webcam-container">
