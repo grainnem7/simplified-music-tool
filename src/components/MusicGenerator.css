@@ -4,7 +4,14 @@
   gap: 1rem;
 }
 
-/* Preset selection removed */
+/* Preset indicator */
+.preset-indicator {
+  text-align: center;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
 
 .status {
   display: flex;

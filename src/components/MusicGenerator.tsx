@@ -12,12 +12,14 @@ interface MusicGeneratorProps {
 
 function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorProps) {
   const [testStatus, setTestStatus] = useState<string>('')
-  const { generateMusic, selectPreset, testSound, isMobile } = useMusicGeneration()
+  const { generateMusic, selectPreset, testSound, currentPreset, isMobile } = useMusicGeneration()
   
-  // Auto-select mobile-optimized preset for mobile devices
+  // Auto-select mobile-optimized preset for mobile devices, otherwise default to ambient
   useEffect(() => {
     if (isMobile) {
       selectPreset('mobile-optimized')
+    } else {
+      selectPreset('ambient')
     }
   }, [isMobile, selectPreset])
   
@@ -60,7 +62,10 @@ function MusicGenerator({ isActive, poses, selectedBodyParts }: MusicGeneratorPr
 
   return (
     <div className="music-generator">
-      {/* Preset selection removed */}
+      {/* Current preset indicator */}
+      <div className="preset-indicator">
+        <small>Mode: {currentPreset === 'mobile-optimized' ? '📱 Mobile' : '✨ Ambient'}</small>
+      </div>
       
       <div className={`status ${isActive ? 'active' : ''}`}>
         <span className="status-icon"></span>
