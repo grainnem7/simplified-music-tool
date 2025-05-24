@@ -11,6 +11,7 @@ type AppState = 'welcome' | 'setup' | 'performance'
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('welcome')
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([])
+  const [musicMode, setMusicMode] = useState<'standard' | 'harp'>('standard')
   
   // Remove any GitHub corners that might be present from previous builds
   useEffect(() => {
@@ -24,8 +25,9 @@ function App() {
     setCurrentState('setup')
   }
 
-  const handleSetupComplete = (bodyParts: string[]) => {
+  const handleSetupComplete = (bodyParts: string[], mode: 'standard' | 'harp') => {
     setSelectedBodyParts(bodyParts)
+    setMusicMode(mode)
     setCurrentState('performance')
   }
 
@@ -45,6 +47,7 @@ function App() {
           {currentState === 'performance' && (
             <PerformanceView 
               selectedBodyParts={selectedBodyParts} 
+              musicMode={musicMode}
               onBackToSetup={handleBackToSetup}
             />
           )}

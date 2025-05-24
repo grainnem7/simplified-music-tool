@@ -1,10 +1,14 @@
 import { forwardRef, useRef, useEffect, useState } from 'react'
 import Webcam from 'react-webcam'
+import HarpOverlay from './HarpOverlay'
 import './WebcamCapture.css'
 
 interface WebcamCaptureProps {
   poses?: any[]
   selectedBodyParts?: string[]
+  showHarpOverlay?: boolean
+  harpPedalPositions?: { [key: string]: 'flat' | 'natural' | 'sharp' }
+  onHarpStringPlucked?: (stringIndex: number, note: string) => void
 }
 
 // Format keypoint names to be more user-friendly
@@ -55,7 +59,13 @@ const mapKeypointToBodyPartId = (keypointName: string): string => {
   return '';
 }
 
-const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedBodyParts = [] }, ref) => {
+const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ 
+  poses, 
+  selectedBodyParts = [],
+  showHarpOverlay = false,
+  harpPedalPositions = {},
+  onHarpStringPlucked
+}, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showLabels, setShowLabels] = useState(false)
   
@@ -252,6 +262,33 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedB
     console.log(`Selected body parts (${selectedBodyParts.length}):`, selectedBodyParts);
   }, [poses, isMobile, showLabels, selectedBodyParts]) // Will re-run when poses or selectedBodyParts change
 
+  // Extract hand positions from poses for harp overlay
+  const getHandPositions = () => {
+    if (!poses || poses.length === 0) return undefined;
+    
+    const pose = poses[0];
+    const leftWrist = pose.keypoints.find((kp: any) => kp.name === 'left_wrist');
+    const rightWrist = pose.keypoints.find((kp: any) => kp.name === 'right_wrist');
+    
+    const handPositions: { left?: { x: number; y: number }, right?: { x: number; y: number } } = {};
+    
+    if (leftWrist && leftWrist.score > 0.3) {
+      handPositions.left = {
+        x: (1 - leftWrist.x) * 640, // Mirror and scale to canvas width
+        y: leftWrist.y * 480
+      };
+    }
+    
+    if (rightWrist && rightWrist.score > 0.3) {
+      handPositions.right = {
+        x: (1 - rightWrist.x) * 640, // Mirror and scale to canvas width
+        y: rightWrist.y * 480
+      };
+    }
+    
+    return handPositions;
+  };
+
   return (
     <div className="webcam-container">
       <Webcam
@@ -267,6 +304,16 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedB
         height={480}
         className="webcam-canvas"
       />
+      {showHarpOverlay && (
+        <HarpOverlay
+          width={640}
+          height={480}
+          handPositions={getHandPositions()}
+          onStringPlucked={onHarpStringPlucked}
+          pedalPositions={harpPedalPositions}
+          isMobile={isMobile}
+        />
+      )}
       <button 
         className="labels-toggle"
         onClick={() => setShowLabels(!showLabels)}

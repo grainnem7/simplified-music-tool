@@ -3,8 +3,10 @@ import * as Tone from 'tone'
 import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
 import BodyDiagram from './BodyDiagram'
+import HarpPedals, { DEFAULT_PRESETS } from './HarpPedals'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
+import { createHarpSynth, playHarpNote } from '../services/harpMusic'
 import './PerformanceView.css'
 
 // Mapping to display human-readable names
@@ -30,23 +32,44 @@ const BODY_PART_LABELS: Record<string, string> = {
 
 interface PerformanceViewProps {
   selectedBodyParts: string[]
+  musicMode: 'standard' | 'harp'
   onBackToSetup: () => void
 }
 
-function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewProps) {
+function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: PerformanceViewProps) {
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
   const webcamRef = useRef<any>(null)
   
+  // Harp mode state
+  const [harpPedalPositions, setHarpPedalPositions] = useState<{ [key: string]: 'flat' | 'natural' | 'sharp' }>(
+    DEFAULT_PRESETS['C Major']
+  )
+  const harpSynthRef = useRef<Tone.PolySynth | null>(null)
+  
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
   const { generateMusic, stopMusic, currentPreset, isMobile } = useMusicGeneration()
 
   useEffect(() => {
-    if (isPerforming && poses) {
+    if (isPerforming && poses && musicMode === 'standard') {
       generateMusic(poses, selectedBodyParts)
     }
-  }, [poses, isPerforming, selectedBodyParts, generateMusic])
+  }, [poses, isPerforming, selectedBodyParts, generateMusic, musicMode])
+  
+  // Initialize harp synth when in harp mode
+  useEffect(() => {
+    if (musicMode === 'harp' && !harpSynthRef.current) {
+      harpSynthRef.current = createHarpSynth()
+    }
+    
+    return () => {
+      if (harpSynthRef.current) {
+        harpSynthRef.current.dispose()
+        harpSynthRef.current = null
+      }
+    }
+  }, [musicMode])
   
   // Add a separate effect to log when performance starts
   useEffect(() => {
@@ -55,12 +78,34 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
     }
   }, [isPerforming, selectedBodyParts])
 
+  // Harp mode handlers
+  const handleHarpStringPlucked = (stringIndex: number, note: string) => {
+    if (harpSynthRef.current && isPerforming) {
+      playHarpNote(harpSynthRef.current, note, '8n', 0.7)
+    }
+  }
+  
+  const handlePedalChange = (pedal: string, position: 'flat' | 'natural' | 'sharp') => {
+    setHarpPedalPositions(prev => ({
+      ...prev,
+      [pedal]: position
+    }))
+  }
+  
+  const handlePresetSelect = (presetName: string) => {
+    if (presetName in DEFAULT_PRESETS) {
+      setHarpPedalPositions(DEFAULT_PRESETS[presetName as keyof typeof DEFAULT_PRESETS])
+    }
+  }
+
   const handleTogglePerformance = async () => {
     try {
       setError('')
       if (isPerforming) {
         stopDetection()
-        stopMusic()
+        if (musicMode === 'standard') {
+          stopMusic()
+        }
         setIsPerforming(false)
         return
       }
@@ -132,29 +177,57 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       
       <div className="performance-area">
         <div className="webcam-container">
-          <WebcamCapture ref={webcamRef} poses={poses} selectedBodyParts={selectedBodyParts} />
+          <WebcamCapture 
+            ref={webcamRef} 
+            poses={poses} 
+            selectedBodyParts={selectedBodyParts}
+            showHarpOverlay={musicMode === 'harp'}
+            harpPedalPositions={harpPedalPositions}
+            onHarpStringPlucked={handleHarpStringPlucked}
+          />
+          {musicMode === 'harp' && (
+            <HarpPedals
+              pedalPositions={harpPedalPositions}
+              onPedalChange={handlePedalChange}
+              onPresetSelect={handlePresetSelect}
+            />
+          )}
         </div>
         
         <div className="status-panel">
-          {/* Body Parts Visual */}
-          <div className="body-parts-panel">
-            <h3>Selected Body Parts</h3>
-            <BodyDiagram selectedParts={selectedBodyParts} />
-            {selectedBodyParts.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#888', marginTop: '1rem' }}>
-                No body parts selected
-              </p>
-            )}
-          </div>
-          
-          {/* Music Controls */}
-          <div className="music-controls">
-            <MusicGenerator 
-              isActive={isPerforming}
-              poses={poses}
-              selectedBodyParts={selectedBodyParts}
-            />
-          </div>
+          {musicMode === 'standard' ? (
+            <>
+              {/* Body Parts Visual */}
+              <div className="body-parts-panel">
+                <h3>Selected Body Parts</h3>
+                <BodyDiagram selectedParts={selectedBodyParts} />
+                {selectedBodyParts.length === 0 && (
+                  <p style={{ textAlign: 'center', color: '#888', marginTop: '1rem' }}>
+                    No body parts selected
+                  </p>
+                )}
+              </div>
+              
+              {/* Music Controls */}
+              <div className="music-controls">
+                <MusicGenerator 
+                  isActive={isPerforming}
+                  poses={poses}
+                  selectedBodyParts={selectedBodyParts}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="harp-info-panel">
+              <h3>Harp Mode</h3>
+              <p>Move your hands across the strings to play!</p>
+              <div className="harp-legend">
+                <div><span style={{ color: '#ff0000' }}>●</span> C strings (Red)</div>
+                <div><span style={{ color: '#000080' }}>●</span> F strings (Blue)</div>
+                <div><span style={{ color: '#ffffff' }}>●</span> Other strings</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
