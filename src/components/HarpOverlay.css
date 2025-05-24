@@ -38,6 +38,12 @@
   user-select: none;
 }
 
+/* Fingertip indicators */
+.fingertip-indicator {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+  transition: all 0.1s ease-out;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .harp-strings-svg text {
@@ -46,5 +52,9 @@
   
   .harp-strings-svg line {
     stroke-width: 1.5;
+  }
+  
+  .fingertip-indicator {
+    r: 4;
   }
 }

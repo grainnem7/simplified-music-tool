@@ -6,7 +6,9 @@ import BodyDiagram from './BodyDiagram'
 import HarpPedals, { DEFAULT_PRESETS } from './HarpPedals'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
+import { useHandDetection } from '../hooks/useHandDetection'
 import { createHarpSynth, playHarpNote } from '../services/harpMusic'
+import { getFingertipPositions, HAND_LANDMARKS } from '../services/handDetection'
 import './PerformanceView.css'
 
 // Mapping to display human-readable names
@@ -50,6 +52,7 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
   
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
   const { generateMusic, stopMusic, currentPreset, isMobile } = useMusicGeneration()
+  const { hands, startDetection: startHandDetection, stopDetection: stopHandDetection } = useHandDetection(webcamRef)
 
   useEffect(() => {
     if (isPerforming && poses && musicMode === 'standard') {
@@ -78,6 +81,42 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
     }
   }, [isPerforming, selectedBodyParts])
 
+  // Get fingertip positions from detected hands
+  const getFingertipPositionsFromHands = () => {
+    if (!hands || hands.length === 0) {
+      return undefined;
+    }
+    
+    console.log('Processing hands for fingertips:', hands.length);
+    const fingertips: Array<{ x: number; y: number; finger: string; hand: 'left' | 'right' }> = [];
+    
+    hands.forEach(hand => {
+      const fingerNames = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+      const fingertipIndices = [
+        HAND_LANDMARKS.THUMB_TIP,
+        HAND_LANDMARKS.INDEX_FINGER_TIP,
+        HAND_LANDMARKS.MIDDLE_FINGER_TIP,
+        HAND_LANDMARKS.RING_FINGER_TIP,
+        HAND_LANDMARKS.PINKY_TIP
+      ];
+      
+      fingertipIndices.forEach((index, i) => {
+        const keypoint = hand.keypoints[index];
+        if (keypoint) {
+          fingertips.push({
+            x: keypoint.x,
+            y: keypoint.y,
+            finger: fingerNames[i],
+            hand: hand.handedness.toLowerCase() as 'left' | 'right'
+          });
+        }
+      });
+    });
+    
+    console.log('Fingertip positions:', fingertips.length);
+    return fingertips.length > 0 ? fingertips : undefined;
+  };
+
   // Harp mode handlers
   const handleHarpStringPlucked = (stringIndex: number, note: string) => {
     if (harpSynthRef.current && isPerforming) {
@@ -102,8 +141,10 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
     try {
       setError('')
       if (isPerforming) {
-        stopDetection()
-        if (musicMode === 'standard') {
+        if (musicMode === 'harp') {
+          stopHandDetection()
+        } else {
+          stopDetection()
           stopMusic()
         }
         setIsPerforming(false)
@@ -137,13 +178,19 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
       }
       
       try {
-        // Now start pose detection
-        await startDetection()
-        console.log('Pose detection started successfully')
+        // Start appropriate detection based on mode
+        if (musicMode === 'harp') {
+          await startHandDetection()
+          console.log('Hand detection started successfully')
+        } else {
+          await startDetection()
+          console.log('Pose detection started successfully')
+        }
         setIsPerforming(true)
       } catch (detectionErr) {
         console.error('Detection error:', detectionErr)
-        throw new Error('Could not start pose detection. Please check camera permissions.')
+        const detectionType = musicMode === 'harp' ? 'hand' : 'pose';
+        throw new Error(`Could not start ${detectionType} detection. Please check camera permissions.`)
       }
     } catch (err: any) {
       console.error('Performance start error:', err)
@@ -179,11 +226,12 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
         <div className="webcam-container">
           <WebcamCapture 
             ref={webcamRef} 
-            poses={poses} 
+            poses={musicMode === 'standard' ? poses : undefined} 
             selectedBodyParts={selectedBodyParts}
             showHarpOverlay={musicMode === 'harp'}
             harpPedalPositions={harpPedalPositions}
             onHarpStringPlucked={handleHarpStringPlucked}
+            fingertipPositions={musicMode === 'harp' ? getFingertipPositionsFromHands() : undefined}
           />
           {musicMode === 'harp' && (
             <HarpPedals
@@ -226,6 +274,11 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
                 <div><span style={{ color: '#000080' }}>●</span> F strings (Blue)</div>
                 <div><span style={{ color: '#ffffff' }}>●</span> Other strings</div>
               </div>
+              {isPerforming && (
+                <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  Hand Detection: {hands ? `${hands.length} hand(s) detected` : 'Waiting for hands...'}
+                </div>
+              )}
             </div>
           )}
         </div>

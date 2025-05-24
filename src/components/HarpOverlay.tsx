@@ -5,6 +5,7 @@ interface HarpOverlayProps {
   width: number;
   height: number;
   handPositions?: { left?: { x: number; y: number }, right?: { x: number; y: number } };
+  fingertipPositions?: Array<{ x: number; y: number; finger: string; hand: 'left' | 'right' }>;
   onStringPlucked?: (stringIndex: number, note: string) => void;
   pedalPositions: { [key: string]: 'flat' | 'natural' | 'sharp' };
   isMobile?: boolean;
@@ -25,12 +26,14 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
   width, 
   height, 
   handPositions, 
+  fingertipPositions,
   onStringPlucked,
   pedalPositions,
   isMobile = false
 }) => {
   const [activeStrings, setActiveStrings] = useState<Set<number>>(new Set());
   const [lastHandPositions, setLastHandPositions] = useState<{ left?: { x: number }, right?: { x: number } }>({});
+  const [lastFingertipPositions, setLastFingertipPositions] = useState<Map<string, number>>(new Map());
   const [vibratingSstrings, setVibratingStrings] = useState<Set<number>>(new Set());
 
   // For mobile, show every other string to improve performance
@@ -59,60 +62,114 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
     return `${noteName}${modifier}${octave}`;
   };
 
-  // Check for string collisions
+  // Check for string collisions - prefer fingertips if available, fallback to wrists
   useEffect(() => {
-    if (!handPositions || !onStringPlucked) return;
+    if (!onStringPlucked) return;
 
-    const checkHandCrossing = (hand: 'left' | 'right', position?: { x: number; y: number }) => {
-      if (!position) return;
-      
-      const lastX = lastHandPositions[hand]?.x;
-      if (lastX === undefined) {
-        setLastHandPositions(prev => ({ ...prev, [hand]: { x: position.x } }));
-        return;
-      }
-
-      // Check each string to see if hand crossed it
-      displayStrings.forEach((string, index) => {
-        const stringX = stringSpacing * (index + 1);
-        const crossed = (lastX < stringX && position.x >= stringX) || 
-                       (lastX > stringX && position.x <= stringX);
+    // Use fingertip positions if available
+    if (fingertipPositions && fingertipPositions.length > 0) {
+      fingertipPositions.forEach(fingertip => {
+        const fingerId = `${fingertip.hand}_${fingertip.finger}`;
+        const lastX = lastFingertipPositions.get(fingerId);
         
-        if (crossed && !activeStrings.has(index)) {
-          // String was plucked
-          const actualNote = getActualNote(string);
-          onStringPlucked(index, actualNote);
-          
-          // Add to active strings to prevent rapid re-triggering
-          setActiveStrings(prev => new Set(prev).add(index));
-          
-          // Add vibration effect
-          setVibratingStrings(prev => new Set(prev).add(index));
-          setTimeout(() => {
-            setVibratingStrings(prev => {
-              const next = new Set(prev);
-              next.delete(index);
-              return next;
-            });
-          }, 500);
-          
-          // Remove from active after a short delay
-          setTimeout(() => {
-            setActiveStrings(prev => {
-              const next = new Set(prev);
-              next.delete(index);
-              return next;
-            });
-          }, 100);
+        if (lastX === undefined) {
+          setLastFingertipPositions(prev => new Map(prev).set(fingerId, fingertip.x));
+          return;
         }
+
+        // Check each string to see if fingertip crossed it
+        displayStrings.forEach((string, index) => {
+          const stringX = stringSpacing * (index + 1);
+          const crossed = (lastX < stringX && fingertip.x >= stringX) || 
+                         (lastX > stringX && fingertip.x <= stringX);
+          
+          const activeKey = `${fingerId}_${index}`;
+          
+          if (crossed && !activeStrings.has(index)) {
+            // String was plucked by this fingertip
+            const actualNote = getActualNote(string);
+            onStringPlucked(index, actualNote);
+            
+            // Add to active strings to prevent rapid re-triggering
+            setActiveStrings(prev => new Set(prev).add(index));
+            
+            // Add vibration effect
+            setVibratingStrings(prev => new Set(prev).add(index));
+            setTimeout(() => {
+              setVibratingStrings(prev => {
+                const next = new Set(prev);
+                next.delete(index);
+                return next;
+              });
+            }, 500);
+            
+            // Remove from active after a short delay
+            setTimeout(() => {
+              setActiveStrings(prev => {
+                const next = new Set(prev);
+                next.delete(index);
+                return next;
+              });
+            }, 150);
+          }
+        });
+
+        setLastFingertipPositions(prev => new Map(prev).set(fingerId, fingertip.x));
       });
+    } 
+    // Fallback to wrist positions if no fingertips detected
+    else if (handPositions) {
+      const checkHandCrossing = (hand: 'left' | 'right', position?: { x: number; y: number }) => {
+        if (!position) return;
+        
+        const lastX = lastHandPositions[hand]?.x;
+        if (lastX === undefined) {
+          setLastHandPositions(prev => ({ ...prev, [hand]: { x: position.x } }));
+          return;
+        }
 
-      setLastHandPositions(prev => ({ ...prev, [hand]: { x: position.x } }));
-    };
+        // Check each string to see if hand crossed it
+        displayStrings.forEach((string, index) => {
+          const stringX = stringSpacing * (index + 1);
+          const crossed = (lastX < stringX && position.x >= stringX) || 
+                         (lastX > stringX && position.x <= stringX);
+          
+          if (crossed && !activeStrings.has(index)) {
+            // String was plucked
+            const actualNote = getActualNote(string);
+            onStringPlucked(index, actualNote);
+            
+            // Add to active strings to prevent rapid re-triggering
+            setActiveStrings(prev => new Set(prev).add(index));
+            
+            // Add vibration effect
+            setVibratingStrings(prev => new Set(prev).add(index));
+            setTimeout(() => {
+              setVibratingStrings(prev => {
+                const next = new Set(prev);
+                next.delete(index);
+                return next;
+              });
+            }, 500);
+            
+            // Remove from active after a short delay
+            setTimeout(() => {
+              setActiveStrings(prev => {
+                const next = new Set(prev);
+                next.delete(index);
+                return next;
+              });
+            }, 100);
+          }
+        });
 
-    checkHandCrossing('left', handPositions.left);
-    checkHandCrossing('right', handPositions.right);
-  }, [handPositions, lastHandPositions, onStringPlucked, activeStrings, displayStrings, stringSpacing, pedalPositions]);
+        setLastHandPositions(prev => ({ ...prev, [hand]: { x: position.x } }));
+      };
+
+      checkHandCrossing('left', handPositions.left);
+      checkHandCrossing('right', handPositions.right);
+    }
+  }, [handPositions, fingertipPositions, lastHandPositions, lastFingertipPositions, onStringPlucked, activeStrings, displayStrings, stringSpacing, pedalPositions]);
 
   return (
     <div className="harp-overlay" style={{ width, height }}>
@@ -148,6 +205,19 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
             </g>
           );
         })}
+        
+        {/* Render fingertip positions */}
+        {fingertipPositions && fingertipPositions.map((fingertip, index) => (
+          <circle
+            key={`fingertip-${index}`}
+            cx={fingertip.x}
+            cy={fingertip.y}
+            r={6}
+            fill={fingertip.hand === 'left' ? '#4ecdc4' : '#f7b801'}
+            opacity={0.8}
+            className="fingertip-indicator"
+          />
+        ))}
       </svg>
     </div>
   );

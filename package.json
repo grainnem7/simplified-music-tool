@@ -10,6 +10,8 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@mediapipe/hands": "^0.4.1675469240",
+    "@tensorflow-models/hand-pose-detection": "^2.0.1",
     "@tensorflow-models/pose-detection": "^2.1.3",
     "@tensorflow/tfjs": "^4.22.0",
     "react": "^18.2.0",
