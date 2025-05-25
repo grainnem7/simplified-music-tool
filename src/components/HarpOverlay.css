@@ -1,0 +1,60 @@
+.harp-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.harp-strings-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.harp-strings-svg line {
+  transition: stroke-width 0.1s ease-out;
+}
+
+.harp-strings-svg line.vibrating {
+  animation: vibrate 0.5s ease-out;
+}
+
+@keyframes vibrate {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-1px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(1px);
+  }
+}
+
+.harp-strings-svg text {
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  user-select: none;
+}
+
+/* Fingertip indicators */
+.fingertip-indicator {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+  transition: all 0.1s ease-out;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .harp-strings-svg text {
+    font-size: 8px;
+  }
+  
+  .harp-strings-svg line {
+    stroke-width: 1.5;
+  }
+  
+  .fingertip-indicator {
+    r: 4;
+  }
+}

@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import * as Tone from 'tone'
 import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
 import BodyDiagram from './BodyDiagram'
+import HarpPedals, { DEFAULT_PRESETS } from './HarpPedals'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
+import { useHandDetection } from '../hooks/useHandDetection'
+import { createHarpSynth, playHarpNote } from '../services/harpMusic'
+import { getFingertipPositions, HAND_LANDMARKS } from '../services/handDetection'
 import './PerformanceView.css'
 
 // Mapping to display human-readable names
@@ -30,23 +34,45 @@ const BODY_PART_LABELS: Record<string, string> = {
 
 interface PerformanceViewProps {
   selectedBodyParts: string[]
+  musicMode: 'standard' | 'harp'
   onBackToSetup: () => void
 }
 
-function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewProps) {
+function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: PerformanceViewProps) {
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
   const webcamRef = useRef<any>(null)
   
+  // Harp mode state
+  const [harpPedalPositions, setHarpPedalPositions] = useState<{ [key: string]: 'flat' | 'natural' | 'sharp' }>(
+    DEFAULT_PRESETS['C Major']
+  )
+  const harpSynthRef = useRef<Tone.PolySynth | null>(null)
+  
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
   const { generateMusic, stopMusic, currentPreset, isMobile } = useMusicGeneration()
+  const { hands, startDetection: startHandDetection, stopDetection: stopHandDetection } = useHandDetection(webcamRef)
 
   useEffect(() => {
-    if (isPerforming && poses) {
+    if (isPerforming && poses && musicMode === 'standard') {
       generateMusic(poses, selectedBodyParts)
     }
-  }, [poses, isPerforming, selectedBodyParts, generateMusic])
+  }, [poses, isPerforming, selectedBodyParts, generateMusic, musicMode])
+  
+  // Initialize harp synth when in harp mode
+  useEffect(() => {
+    if (musicMode === 'harp' && !harpSynthRef.current) {
+      harpSynthRef.current = createHarpSynth()
+    }
+    
+    return () => {
+      if (harpSynthRef.current) {
+        harpSynthRef.current.dispose()
+        harpSynthRef.current = null
+      }
+    }
+  }, [musicMode])
   
   // Add a separate effect to log when performance starts
   useEffect(() => {
@@ -55,12 +81,71 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
     }
   }, [isPerforming, selectedBodyParts])
 
+  // Get fingertip positions from detected hands
+  const getFingertipPositionsFromHands = useCallback(() => {
+    if (!hands || hands.length === 0) {
+      return undefined;
+    }
+    
+    console.log('Processing hands for fingertips:', hands.length);
+    const fingertips: Array<{ x: number; y: number; finger: string; hand: 'left' | 'right' }> = [];
+    
+    hands.forEach(hand => {
+      // Only track index finger for now
+      const keypoint = hand.keypoints[HAND_LANDMARKS.INDEX_FINGER_TIP];
+      if (keypoint && !isNaN(keypoint.x) && !isNaN(keypoint.y)) {
+        // MediaPipe returns pixel coordinates
+        fingertips.push({
+          x: keypoint.x,
+          y: keypoint.y,
+          finger: 'index',
+          hand: (hand.handedness || 'right').toLowerCase() as 'left' | 'right'
+        });
+      }
+    });
+    
+    console.log('Fingertips found:', fingertips.length);
+    return fingertips.length > 0 ? fingertips : undefined;
+  }, [hands]);
+
+  // Harp mode handlers
+  const handleHarpStringPlucked = (stringIndex: number, note: string, velocity: number = 0.7) => {
+    console.log('String plucked:', stringIndex, note, 'velocity:', velocity);
+    if (harpSynthRef.current && isPerforming) {
+      try {
+        playHarpNote(harpSynthRef.current, note, '8n', velocity);
+        console.log('Note played successfully:', note);
+      } catch (err) {
+        console.error('Error playing note:', err);
+      }
+    } else {
+      console.log('Cannot play note:', { hasSynth: !!harpSynthRef.current, isPerforming });
+    }
+  }
+  
+  const handlePedalChange = (pedal: string, position: 'flat' | 'natural' | 'sharp') => {
+    setHarpPedalPositions(prev => ({
+      ...prev,
+      [pedal]: position
+    }))
+  }
+  
+  const handlePresetSelect = (presetName: string) => {
+    if (presetName in DEFAULT_PRESETS) {
+      setHarpPedalPositions(DEFAULT_PRESETS[presetName as keyof typeof DEFAULT_PRESETS])
+    }
+  }
+
   const handleTogglePerformance = async () => {
     try {
       setError('')
       if (isPerforming) {
+        // Stop both detection types in case we're using fallback
+        stopHandDetection()
         stopDetection()
-        stopMusic()
+        if (musicMode === 'standard') {
+          stopMusic()
+        }
         setIsPerforming(false)
         return
       }
@@ -69,11 +154,11 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       try {
         console.log('Setting up audio context before starting performance...')
         
-        // Create a new context with appropriate settings based on device
+        // Create a new context with balanced settings
         Tone.setContext(new Tone.Context({
-          latencyHint: isMobile ? 'interactive' : 'balanced',
-          lookAhead: isMobile ? 0.1 : 0.2,
-          updateInterval: isMobile ? 0.03 : 0.05
+          latencyHint: 'interactive',
+          lookAhead: 0.05, // More stable lookahead
+          updateInterval: 0.02 // Balanced update rate
         }))
         
         // Start Tone.js audio context on user interaction
@@ -92,13 +177,24 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       }
       
       try {
-        // Now start pose detection
+        // Always start pose detection first
         await startDetection()
         console.log('Pose detection started successfully')
+        
+        // Additionally try hand detection for harp mode
+        if (musicMode === 'harp') {
+          try {
+            await startHandDetection()
+            console.log('Hand detection started successfully')
+          } catch (handErr) {
+            console.warn('Hand detection failed, will use wrist tracking only:', handErr)
+          }
+        }
+        
         setIsPerforming(true)
       } catch (detectionErr) {
         console.error('Detection error:', detectionErr)
-        throw new Error('Could not start pose detection. Please check camera permissions.')
+        throw new Error(`Could not start detection. Please check camera permissions.`)
       }
     } catch (err: any) {
       console.error('Performance start error:', err)
@@ -130,31 +226,92 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         </div>
       )}
       
-      <div className="performance-area">
+      <div className={`performance-area ${musicMode === 'harp' ? 'harp-mode' : ''}`}>
         <div className="webcam-container">
-          <WebcamCapture ref={webcamRef} poses={poses} selectedBodyParts={selectedBodyParts} />
+          <WebcamCapture 
+            ref={webcamRef} 
+            poses={poses} 
+            selectedBodyParts={selectedBodyParts}
+            showHarpOverlay={musicMode === 'harp'}
+            harpPedalPositions={harpPedalPositions}
+            onHarpStringPlucked={handleHarpStringPlucked}
+            fingertipPositions={musicMode === 'harp' ? getFingertipPositionsFromHands() : undefined}
+          />
         </div>
         
+        {musicMode === 'harp' && (
+          <HarpPedals
+            pedalPositions={harpPedalPositions}
+            onPedalChange={handlePedalChange}
+            onPresetSelect={handlePresetSelect}
+          />
+        )}
+        
         <div className="status-panel">
-          {/* Body Parts Visual */}
-          <div className="body-parts-panel">
-            <h3>Selected Body Parts</h3>
-            <BodyDiagram selectedParts={selectedBodyParts} />
-            {selectedBodyParts.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#888', marginTop: '1rem' }}>
-                No body parts selected
-              </p>
-            )}
-          </div>
+          {musicMode === 'standard' ? (
+            <>
+              {/* Body Parts Visual */}
+              <div className="body-parts-panel">
+                <h3>Selected Body Parts</h3>
+                <BodyDiagram selectedParts={selectedBodyParts} />
+                {selectedBodyParts.length === 0 && (
+                  <p style={{ textAlign: 'center', color: '#888', marginTop: '1rem' }}>
+                    No body parts selected
+                  </p>
+                )}
+              </div>
+              
+              {/* Music Controls */}
+              <div className="music-controls">
+                <MusicGenerator 
+                  isActive={isPerforming}
+                  poses={poses}
+                  selectedBodyParts={selectedBodyParts}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="harp-info-panel">
+              <h3>Harp Mode</h3>
+              <p>Move your hands across the strings to play!</p>
+              <div className="harp-legend">
+                <div><span style={{ color: '#ff0000' }}>●</span> C strings (Red)</div>
+                <div><span style={{ color: '#000080' }}>●</span> F strings (Blue)</div>
+                <div><span style={{ color: '#ffffff' }}>●</span> Other strings</div>
+              </div>
+              {isPerforming && (
+                <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  {hands && hands.length > 0 ? (
+                    `Hand Detection: ${hands.length} hand(s) with ${getFingertipPositionsFromHands()?.length || 0} fingertips`
+                  ) : poses && poses.length > 0 ? (
+                    'Using wrist tracking (hand detection unavailable)'
+                  ) : (
+                    'Waiting for detection...'
+                  )}
+                  <br />
+                  <small>Debug: hands={!!hands}, poses={!!poses}</small>
+                </div>
+              )}
+            </div>
+          )}
           
-          {/* Music Controls */}
-          <div className="music-controls">
-            <MusicGenerator 
-              isActive={isPerforming}
-              poses={poses}
-              selectedBodyParts={selectedBodyParts}
-            />
-          </div>
+          {/* Test button for harp sound */}
+          {musicMode === 'harp' && isPerforming && (
+            <button
+              onClick={() => handleHarpStringPlucked(20, 'C4')}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                background: 'var(--accent-color)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Test Harp Sound (C4)
+            </button>
+          )}
         </div>
       </div>
       

@@ -27,7 +27,7 @@ $finalHtml = @"
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Movement to Music AI</title>
   <link rel="stylesheet" href="assets/index-2a4da40b.css">
-  <meta name="description" content="Transform your movements into music using AI with customizable body part tracking">
+  <meta name="description" content="Create music using your body movements with customizable body part tracking">
   <meta name="theme-color" content="#1a1a1a">
   <style>
     .github-corner { display: none !important; }

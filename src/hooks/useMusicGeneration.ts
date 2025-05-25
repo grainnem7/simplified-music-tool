@@ -827,3 +827,4 @@ export function useMusicGeneration() {
     isMobile: isMobileDevice.current // Expose mobile status for UI optimizations
   }
 }
+

@@ -1,10 +1,15 @@
 import { forwardRef, useRef, useEffect, useState } from 'react'
 import Webcam from 'react-webcam'
+import HarpOverlay from './HarpOverlay'
 import './WebcamCapture.css'
 
 interface WebcamCaptureProps {
   poses?: any[]
   selectedBodyParts?: string[]
+  showHarpOverlay?: boolean
+  harpPedalPositions?: { [key: string]: 'flat' | 'natural' | 'sharp' }
+  onHarpStringPlucked?: (stringIndex: number, note: string) => void
+  fingertipPositions?: Array<{ x: number; y: number; finger: string; hand: 'left' | 'right' }>
 }
 
 // Format keypoint names to be more user-friendly
@@ -55,7 +60,14 @@ const mapKeypointToBodyPartId = (keypointName: string): string => {
   return '';
 }
 
-const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedBodyParts = [] }, ref) => {
+const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ 
+  poses, 
+  selectedBodyParts = [],
+  showHarpOverlay = false,
+  harpPedalPositions = {},
+  onHarpStringPlucked,
+  fingertipPositions
+}, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showLabels, setShowLabels] = useState(false)
   
@@ -248,9 +260,8 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedB
       })
     }
     
-    // For debugging - log when selectedBodyParts change
-    console.log(`Selected body parts (${selectedBodyParts.length}):`, selectedBodyParts);
   }, [poses, isMobile, showLabels, selectedBodyParts]) // Will re-run when poses or selectedBodyParts change
+
 
   return (
     <div className="webcam-container">
@@ -267,6 +278,16 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ poses, selectedB
         height={480}
         className="webcam-canvas"
       />
+      {showHarpOverlay && (
+        <HarpOverlay
+          width={640}
+          height={480}
+          fingertipPositions={fingertipPositions}
+          onStringPlucked={onHarpStringPlucked}
+          pedalPositions={harpPedalPositions}
+          isMobile={isMobile}
+        />
+      )}
       <button 
         className="labels-toggle"
         onClick={() => setShowLabels(!showLabels)}
