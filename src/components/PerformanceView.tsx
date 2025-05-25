@@ -63,13 +63,15 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
   // Initialize harp synth when in harp mode
   useEffect(() => {
     if (musicMode === 'harp' && !harpSynthRef.current) {
-      harpSynthRef.current = createHarpSynth()
+      console.log('Initializing harp synth for harp mode');
+      harpSynthRef.current = createHarpSynth();
     }
     
     return () => {
       if (harpSynthRef.current) {
-        harpSynthRef.current.dispose()
-        harpSynthRef.current = null
+        console.log('Disposing harp synth');
+        harpSynthRef.current.dispose();
+        harpSynthRef.current = null;
       }
     }
   }, [musicMode])

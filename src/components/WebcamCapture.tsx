@@ -97,6 +97,11 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
         return
       }
       
+      // Skip drawing dots and labels in harp mode
+      if (showHarpOverlay) {
+        return
+      }
+      
       // Define skeleton connections
       const connections = [
         ['left_shoulder', 'right_shoulder'],
@@ -288,14 +293,16 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
           isMobile={isMobile}
         />
       )}
-      <button 
-        className="labels-toggle"
-        onClick={() => setShowLabels(!showLabels)}
-        aria-label={showLabels ? "Hide labels" : "Show labels"}
-        title={showLabels ? "Hide labels" : "Show labels"}
-      >
-        {showLabels ? "Hide Labels" : "Show Labels"}
-      </button>
+      {!showHarpOverlay && (
+        <button 
+          className="labels-toggle"
+          onClick={() => setShowLabels(!showLabels)}
+          aria-label={showLabels ? "Hide labels" : "Show labels"}
+          title={showLabels ? "Hide labels" : "Show labels"}
+        >
+          {showLabels ? "Hide Labels" : "Show Labels"}
+        </button>
+      )}
     </div>
   )
 })

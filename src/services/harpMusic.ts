@@ -48,51 +48,65 @@ export const getActualNote = (baseNote: string, pedalPositions: PedalPositions):
 
 // Create a harp-like synth with increased polyphony
 export const createHarpSynth = (): Tone.PolySynth => {
-  // Use AMSynth for a richer, more harp-like tone
-  const synth = new Tone.PolySynth(Tone.AMSynth, {
-    maxPolyphony: 32,  // Good balance for glissandos
-    oscillator: {
-      type: 'sine'
-    },
-    envelope: {
-      attack: 0.005,     // Quick but not instant for realistic pluck
-      decay: 0.4,        // Natural decay
-      sustain: 0.08,     // Slight sustain
-      release: 1.5       // Natural ring
-    },
-    modulation: {
-      type: 'sine'
-    },
-    modulationEnvelope: {
-      attack: 0.006,
-      decay: 0.3,
-      sustain: 0.5,
-      release: 0.1
-    },
-    harmonicity: 0.5,    // Creates a bell-like quality
-    volume: -8
-  }).toDestination();
+  console.log('Creating harp synth...');
+  
+  try {
+    // Start Tone.js if needed
+    if (Tone.context.state !== 'running') {
+      console.log('Starting Tone.js context...');
+      Tone.start();
+    }
+    
+    // Create a simple harp synth
+    const harpSynth = new Tone.PolySynth(Tone.Synth, {
+      maxPolyphony: 32,
+      oscillator: {
+        type: 'triangle'
+      },
+      envelope: {
+        attack: 0.002,
+        decay: 0.3,
+        sustain: 0.01,
+        release: 2.0
+      }
+    });
 
-  // Simple reverb for space
-  const reverb = new Tone.Reverb({
-    decay: 2.5,
-    wet: 0.3
-  }).toDestination();
-  
-  synth.connect(reverb);
-  
-  return synth;
+    // Simple reverb
+    const reverb = new Tone.Reverb({
+      decay: 2.0,
+      wet: 0.2
+    }).toDestination();
+
+    // Connect and set volume
+    harpSynth.connect(reverb);
+    harpSynth.volume.value = -6;
+    
+    console.log('Harp synth created successfully');
+    return harpSynth;
+    
+  } catch (error) {
+    console.error('Failed to create harp synth:', error);
+    // Return a basic synth as fallback
+    const fallbackSynth = new Tone.PolySynth().toDestination();
+    fallbackSynth.volume.value = -6;
+    return fallbackSynth;
+  }
 };
 
 // Play a single harp note with immediate timing
 export const playHarpNote = (
   synth: Tone.PolySynth,
   note: string,
-  duration: string = '2n',  // Let envelope control the actual duration
-  velocity: number = 0.8
+  duration: string = '8n',
+  velocity: number = 0.7
 ): void => {
-  // Use immediate time ('+0') for lowest latency
-  synth.triggerAttackRelease(note, duration, '+0', velocity);
+  try {
+    console.log('Playing harp note:', note, 'velocity:', velocity);
+    // Play the note immediately
+    synth.triggerAttackRelease(note, duration, undefined, velocity);
+  } catch (error) {
+    console.error('Error playing note:', note, error);
+  }
 };
 
 // Get all notes in the current scale based on pedal positions
@@ -131,11 +145,14 @@ export const playGlissando = async (
   
   const noteDelay = config.duration / notesToPlay.length;
   
-  for (let i = 0; i < notesToPlay.length; i++) {
-    setTimeout(() => {
-      playHarpNote(synth, notesToPlay[i], '4n', config.velocity);
-    }, i * noteDelay * 1000);
-  }
+  // Schedule all notes at once using Tone.js timing for better accuracy
+  const startTime = Tone.now();
+  
+  notesToPlay.forEach((note, i) => {
+    const noteTime = startTime + (i * noteDelay);
+    // Consistent velocity for smooth glissandi
+    synth.triggerAttackRelease(note, '16n', noteTime, config.velocity * 0.6);
+  });
 };
 
 // Chord progressions for different scales
