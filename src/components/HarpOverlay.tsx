@@ -9,6 +9,7 @@ interface HarpOverlayProps {
   pedalPositions: { [key: string]: 'flat' | 'natural' | 'sharp' };
   isMobile?: boolean;
   showDebug?: boolean;
+  harpRange?: { name: string; startString: number; endString: number; description: string };
 }
 
 // Concert harp has 47 strings from C1 to G7
@@ -28,16 +29,24 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
   fingertipPositions,
   onStringPlucked,
   pedalPositions,
-  isMobile = false
+  isMobile = false,
+  harpRange
 }) => {
 
   const [lastFingertipPositions, setLastFingertipPositions] = useState<Map<string, number>>(new Map());
   const [vibratingSstrings, setVibratingStrings] = useState<Set<number>>(new Set());
-  const [lastPlayedStringIndex, setLastPlayedStringIndex] = useState<number>(-1);
+  const [lastPlayedStringIndex, setLastPlayedStringIndex] = useState<Map<string, number>>(new Map()); // Track per finger
   const [lastPlayedTime, setLastPlayedTime] = useState<number>(0);
 
+  // Use the selected range or default to full range
+  const startString = harpRange?.startString ?? 0;
+  const endString = harpRange?.endString ?? 46;
+  
+  // Get the strings for the selected range
+  const rangeStrings = HARP_STRINGS.slice(startString, endString + 1);
+  
   // For mobile, show every other string to improve performance
-  const displayStrings = isMobile ? HARP_STRINGS.filter((_, index) => index % 2 === 0) : HARP_STRINGS;
+  const displayStrings = isMobile ? rangeStrings.filter((_, index) => index % 2 === 0) : rangeStrings;
   const totalStrings = displayStrings.length;
   const stringSpacing = width / (totalStrings + 1);
 
@@ -101,12 +110,13 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
         if (currentStringIndex !== -1) {
           // Single string pluck (no movement or same string)
           if (lastStringIndex === -1 || currentStringIndex === lastStringIndex) {
-            // Only play if this is a new touch or enough time has passed
-            if (lastPlayedStringIndex !== currentStringIndex || Date.now() - lastPlayedTime > 100) {
+            // Only play if this finger just moved to this string (wasn't on it before)
+            const lastPlayedForFinger = lastPlayedStringIndex.get(fingerId);
+            if (lastPlayedForFinger !== currentStringIndex) {
               const actualNote = getActualNote(displayStrings[currentStringIndex]);
               console.log('Playing single string:', currentStringIndex, 'note:', actualNote);
               onStringPlucked(currentStringIndex, actualNote, 0.5);
-              setLastPlayedStringIndex(currentStringIndex);
+              setLastPlayedStringIndex(prev => new Map(prev).set(fingerId, currentStringIndex));
               setLastPlayedTime(Date.now());
               
               // Visual feedback
@@ -176,18 +186,39 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
             }
           }
           
-          setLastPlayedStringIndex(currentStringIndex);
+          setLastPlayedStringIndex(prev => new Map(prev).set(fingerId, currentStringIndex));
           }
+        } else {
+          // Finger is not over any string - clear its last played string
+          setLastPlayedStringIndex(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(fingerId);
+            return newMap;
+          });
         }
 
         setLastFingertipPositions(prev => new Map(prev).set(fingerId, fingertip.x));
       });
     }
-  }, [fingertipPositions, onStringPlucked, displayStrings, stringSpacing, pedalPositions, lastPlayedStringIndex, lastPlayedTime]);
+  }, [fingertipPositions, onStringPlucked, displayStrings, stringSpacing, pedalPositions, lastPlayedTime]);
 
   return (
     <div className="harp-overlay" style={{ width, height }}>
       <svg width={width} height={height} className="harp-strings-svg">
+        {/* Range indicator */}
+        {harpRange && harpRange.name !== 'Full Range' && (
+          <text
+            x={width / 2}
+            y={30}
+            textAnchor="middle"
+            fill="#ffffff"
+            fontSize="14"
+            opacity={0.8}
+          >
+            {harpRange.name}: {displayStrings[0]} - {displayStrings[displayStrings.length - 1]}
+          </text>
+        )}
+        
         {displayStrings.map((string, index) => {
           const x = stringSpacing * (index + 1);
           const color = getStringColor(string);

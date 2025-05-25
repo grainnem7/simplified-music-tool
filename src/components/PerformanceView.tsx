@@ -8,29 +8,19 @@ import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import { useHandDetection } from '../hooks/useHandDetection'
 import { createHarpSynth, playHarpNote } from '../services/harpMusic'
-import { getFingertipPositions, HAND_LANDMARKS } from '../services/handDetection'
+import { HAND_LANDMARKS } from '../services/handDetection'
 import './PerformanceView.css'
 
-// Mapping to display human-readable names
-const BODY_PART_LABELS: Record<string, string> = {
-  'nose': 'Nose',
-  'leftEye': 'Left Eye',
-  'rightEye': 'Right Eye',
-  'leftEar': 'Left Ear',
-  'rightEar': 'Right Ear',
-  'leftShoulder': 'Left Shoulder',
-  'rightShoulder': 'Right Shoulder',
-  'leftElbow': 'Left Elbow',
-  'rightElbow': 'Right Elbow',
-  'leftWrist': 'Left Wrist',
-  'rightWrist': 'Right Wrist',
-  'leftHip': 'Left Hip',
-  'rightHip': 'Right Hip',
-  'leftKnee': 'Left Knee',
-  'rightKnee': 'Right Knee',
-  'leftAnkle': 'Left Ankle',
-  'rightAnkle': 'Right Ankle'
-}
+// Removed unused BODY_PART_LABELS
+
+const HARP_RANGES = [
+  { name: 'Full Range', startString: 0, endString: 46, description: '47 strings (C1-G7)' },
+  { name: 'Upper Range', startString: 24, endString: 46, description: '23 strings (C4-G7)' },
+  { name: 'Middle Range', startString: 14, endString: 35, description: '22 strings (C3-B5)' },
+  { name: 'Lower Range', startString: 0, endString: 23, description: '24 strings (C1-B3)' },
+  { name: 'Practice Range', startString: 21, endString: 35, description: '15 strings (C4-B5)' },
+  { name: 'Single Octave', startString: 21, endString: 27, description: '7 strings (C4-B4)' },
+];
 
 interface PerformanceViewProps {
   selectedBodyParts: string[]
@@ -46,12 +36,18 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
   
   // Harp mode state
   const [harpPedalPositions, setHarpPedalPositions] = useState<{ [key: string]: 'flat' | 'natural' | 'sharp' }>(
-    DEFAULT_PRESETS['C Major']
+    DEFAULT_PRESETS['F Major'] // Start with F Major which has B flat
   )
+  const [harpRange, setHarpRange] = useState({ 
+    name: 'Full Range', 
+    startString: 0, 
+    endString: 46, 
+    description: '47 strings (C1-G7)' 
+  })
   const harpSynthRef = useRef<Tone.PolySynth | null>(null)
   
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
-  const { generateMusic, stopMusic, currentPreset, isMobile } = useMusicGeneration()
+  const { generateMusic, stopMusic, isMobile } = useMusicGeneration()
   const { hands, startDetection: startHandDetection, stopDetection: stopHandDetection } = useHandDetection(webcamRef)
 
   useEffect(() => {
@@ -232,21 +228,40 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
         <div className="webcam-container">
           <WebcamCapture 
             ref={webcamRef} 
-            poses={poses} 
+            poses={poses || undefined} 
             selectedBodyParts={selectedBodyParts}
             showHarpOverlay={musicMode === 'harp'}
             harpPedalPositions={harpPedalPositions}
             onHarpStringPlucked={handleHarpStringPlucked}
             fingertipPositions={musicMode === 'harp' ? getFingertipPositionsFromHands() : undefined}
+            harpRange={harpRange}
           />
         </div>
         
         {musicMode === 'harp' && (
-          <HarpPedals
-            pedalPositions={harpPedalPositions}
-            onPedalChange={handlePedalChange}
-            onPresetSelect={handlePresetSelect}
-          />
+          <>
+            <div className="harp-range-selector">
+              <label>Harp Range:</label>
+              <select 
+                value={harpRange.name}
+                onChange={(e) => {
+                  const range = HARP_RANGES.find(r => r.name === e.target.value);
+                  if (range) setHarpRange(range);
+                }}
+              >
+                {HARP_RANGES.map(range => (
+                  <option key={range.name} value={range.name}>
+                    {range.name} - {range.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <HarpPedals
+              pedalPositions={harpPedalPositions}
+              onPedalChange={handlePedalChange}
+              onPresetSelect={handlePresetSelect}
+            />
+          </>
         )}
         
         <div className="status-panel">
@@ -267,7 +282,7 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
               <div className="music-controls">
                 <MusicGenerator 
                   isActive={isPerforming}
-                  poses={poses}
+                  poses={poses || []}
                   selectedBodyParts={selectedBodyParts}
                 />
               </div>

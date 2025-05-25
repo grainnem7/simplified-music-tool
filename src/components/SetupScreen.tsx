@@ -72,9 +72,8 @@ function SetupScreen({ onComplete }: SetupScreenProps) {
         <div className="harp-mode-info">
           <p>Harp Mode uses your hand movements to play a virtual concert harp.</p>
           <ul>
-            <li>Move your hands across the strings to create beautiful glissandi</li>
-            <li>Red strings are C notes, blue strings are F notes</li>
-            <li>Use the pedal system to change scales and create different harmonies</li>
+            <li>Move your hands across the strings to create glissandi</li>
+            <li>Use the pedal system to change scale</li>
           </ul>
         </div>
       )}

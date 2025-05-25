@@ -19,7 +19,7 @@ const reportPerformance = (type: string, value: number) => {
 }
 
 // Scales that work with our chord progression
-const SCALES_FOR_CHORDS = {
+const SCALES_FOR_CHORDS: Record<string, string[]> = {
   'Dm7': ['D', 'E', 'F', 'G', 'A', 'Bb', 'C'],  // D natural minor
   'Gm7': ['G', 'A', 'Bb', 'C', 'D', 'Eb', 'F'],  // G natural minor
   'BbMaj7': ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A'],  // Bb major
@@ -29,7 +29,7 @@ const SCALES_FOR_CHORDS = {
 }
 
 // Melodic patterns for different moods
-const MELODIC_PATTERNS = {
+const MELODIC_PATTERNS: Record<string, number[]> = {
   contemplative: [0, 2, 3, 2, 0, -2, 0],  // Gentle, circular
   deeper: [0, -2, -3, -2, 0, 1, 0],  // Descending, introspective
   brightening: [0, 2, 4, 2, 4, 5, 4],  // Rising, hopeful
@@ -39,7 +39,7 @@ const MELODIC_PATTERNS = {
 }
 
 // Body part to sound mapping for variety
-const BODY_PART_SOUNDS = {
+const BODY_PART_SOUNDS: Record<string, { octaveRange: number[]; timbre?: string; type?: string }> = {
   // Right side - different octaves and timbres
   'rightWrist': { octaveRange: [5, 6], timbre: 'bright' },
   'rightElbow': { octaveRange: [4, 5], timbre: 'warm' },
@@ -141,7 +141,7 @@ export function useMusicGeneration() {
   const isInitializedRef = useRef(false)
   const lastNoteTimeRef = useRef<Record<string, number>>({}) // Track per body part
   const lastChordTimeRef = useRef<number>(0)
-  const lastBassPadTimeRef = useRef<number>(0)
+  // Removed unused lastBassPadTimeRef
   const currentChordIndexRef = useRef<number>(0)
   const previousPositionsRef = useRef<Record<string, { x: number; y: number }>>({})
   const previousVelocityRef = useRef<Record<string, number>>({}) // Track velocity
@@ -207,8 +207,8 @@ export function useMusicGeneration() {
       console.log('Creating church organ pad synth...')
       padSynthRef.current = new Tone.PolySynth(Tone.Synth, {
         oscillator: {
-          type: 'sine',
-          partials: [1, 0.8, 0.6, 0.4, 0.33, 0.25, 0.2] // Church organ harmonics
+          type: 'sine'
+          // Removed partials - not supported in type definition
         },
         envelope: {
           attack: 0.3,  // Quick but smooth
@@ -219,14 +219,14 @@ export function useMusicGeneration() {
       }).connect(filterRef.current)
       
       padSynthRef.current.volume.value = -10
-      padSynthRef.current.options.maxPolyphony = mobile ? 6 : 8
+      // Removed direct access to private options property
       
       // Create cello-like bass synth
       console.log('Creating cello bass synth...')
       bassPadSynthRef.current = new Tone.PolySynth(Tone.Synth, {
         oscillator: {
-          type: 'sawtooth',
-          partials: [1, 0.5, 0.33, 0.25, 0.2, 0.17] // Cello harmonics
+          type: 'sawtooth'
+          // Removed partials - not supported in type definition
         },
         envelope: {
           attack: 0.8,  // Bow attack
@@ -237,14 +237,14 @@ export function useMusicGeneration() {
       }).connect(filterRef.current)
       
       bassPadSynthRef.current.volume.value = -8
-      bassPadSynthRef.current.options.maxPolyphony = mobile ? 3 : 6
+      // Removed direct access to private options property
       
       // Create softer melodic synth for better blending
       console.log('Creating melodic synth...')
       harpSynthRef.current = new Tone.PolySynth(Tone.Synth, {
         oscillator: {
-          type: 'sine',
-          partials: [1, 0.3, 0.15, 0.08] // Softer harmonics
+          type: 'sine'
+          // Removed partials - not supported in type definition
         },
         envelope: {
           attack: 0.05,  // Slightly slower attack for smoother entries
@@ -255,7 +255,7 @@ export function useMusicGeneration() {
       }).connect(delayRef.current)
       
       harpSynthRef.current.volume.value = -10
-      harpSynthRef.current.options.maxPolyphony = mobile ? 8 : 12
+      // Removed direct access to private options property
       
       isInitializedRef.current = true
       console.log('Ambient synth architecture initialized successfully')
@@ -274,8 +274,7 @@ export function useMusicGeneration() {
           // Get current audio context state
           const contextState = {
             sampleRate: Tone.context.sampleRate,
-            baseLatency: Tone.context.baseLatency || 0,
-            outputLatency: Tone.context.outputLatency || 0,
+            // Removed baseLatency and outputLatency - not available on BaseContext
             lookAhead: Tone.context.lookAhead || 0,
           }
           
@@ -640,8 +639,8 @@ export function useMusicGeneration() {
       if (filterRef.current) {
         filterRef.current.frequency.value = 1200
       }
-      if (bassSynthRef.current) {
-        bassSynthRef.current.volume.value = -6
+      if (bassPadSynthRef.current) {
+        bassPadSynthRef.current.volume.value = -6
       }
     } else if (presetName === 'mobile-optimized') {
       // Optimized for mobile performance
@@ -651,12 +650,8 @@ export function useMusicGeneration() {
       if (delayRef.current) {
         delayRef.current.wet.value = 0.1
       }
-      if (padSynthRef.current) {
-        padSynthRef.current.options.maxPolyphony = 4
-      }
-      if (leadSynthRef.current) {
-        leadSynthRef.current.options.maxPolyphony = 2
-      }
+      // Removed direct access to private options property
+      // Removed direct access to private options property
     }
   }, [])
 

@@ -10,6 +10,7 @@ interface WebcamCaptureProps {
   harpPedalPositions?: { [key: string]: 'flat' | 'natural' | 'sharp' }
   onHarpStringPlucked?: (stringIndex: number, note: string) => void
   fingertipPositions?: Array<{ x: number; y: number; finger: string; hand: 'left' | 'right' }>
+  harpRange?: { name: string; startString: number; endString: number; description: string }
 }
 
 // Format keypoint names to be more user-friendly
@@ -66,7 +67,8 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
   showHarpOverlay = false,
   harpPedalPositions = {},
   onHarpStringPlucked,
-  fingertipPositions
+  fingertipPositions,
+  harpRange
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showLabels, setShowLabels] = useState(false)
@@ -291,6 +293,7 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
           onStringPlucked={onHarpStringPlucked}
           pedalPositions={harpPedalPositions}
           isMobile={isMobile}
+          harpRange={harpRange}
         />
       )}
       {!showHarpOverlay && (
