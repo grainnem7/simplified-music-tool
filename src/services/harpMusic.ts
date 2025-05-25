@@ -57,23 +57,23 @@ export const createHarpSynth = (): Tone.PolySynth => {
       Tone.start();
     }
     
-    // Create a simple harp synth
+    // Create a simple, reliable harp synth
     const harpSynth = new Tone.PolySynth(Tone.Synth, {
-      maxPolyphony: 32,
+      maxPolyphony: 47,
       oscillator: {
         type: 'triangle'
       },
       envelope: {
-        attack: 0.002,
+        attack: 0.001,
         decay: 0.3,
-        sustain: 0.01,
+        sustain: 0,
         release: 2.0
       }
     });
 
     // Simple reverb
     const reverb = new Tone.Reverb({
-      decay: 2.0,
+      decay: 2.5,
       wet: 0.2
     }).toDestination();
 

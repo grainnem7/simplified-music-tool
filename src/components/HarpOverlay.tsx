@@ -30,16 +30,11 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
   pedalPositions,
   isMobile = false
 }) => {
-  // Log what we're receiving
-  useEffect(() => {
-    if (fingertipPositions && fingertipPositions.length > 0) {
-      console.log('HarpOverlay received index fingers:', fingertipPositions.length);
-    }
-  }, [fingertipPositions]);
 
   const [lastFingertipPositions, setLastFingertipPositions] = useState<Map<string, number>>(new Map());
   const [vibratingSstrings, setVibratingStrings] = useState<Set<number>>(new Set());
-  const [lastNoteTime, setLastNoteTime] = useState<number>(0);
+  const [lastPlayedStringIndex, setLastPlayedStringIndex] = useState<number>(-1);
+  const [lastPlayedTime, setLastPlayedTime] = useState<number>(0);
 
   // For mobile, show every other string to improve performance
   const displayStrings = isMobile ? HARP_STRINGS.filter((_, index) => index % 2 === 0) : HARP_STRINGS;
@@ -68,6 +63,8 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
   };
 
 
+
+
   // Check for string collisions - prefer fingertips if available, fallback to wrists
   useEffect(() => {
     if (!onStringPlucked) return;
@@ -77,8 +74,6 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
 
     // Use fingertip positions if available
     if (fingertipPositions && fingertipPositions.length > 0) {
-      // We have fingertips! (removed log to reduce spam)
-      
       fingertipPositions.forEach(fingertip => {
         const fingerId = `${fingertip.hand}_${fingertip.finger}`;
         const lastX = lastFingertipPositions.get(fingerId);
@@ -88,61 +83,107 @@ const HarpOverlay: React.FC<HarpOverlayProps> = memo(({
           return;
         }
 
-        // Calculate movement direction and speed
-        const movementSpeed = Math.abs(fingertip.x - lastX);
-        const isMovingRight = fingertip.x > lastX;
-        const isGlissando = movementSpeed > 5;
-        
-        // For glissando, only check strings in the direction of movement
-        displayStrings.forEach((string, index) => {
-          const stringX = stringSpacing * (index + 1);
-          
-          // Determine if we crossed this string
-          let crossed = false;
-          if (isMovingRight) {
-            // Moving right: check if we just passed this string
-            crossed = lastX <= stringX && fingertip.x > stringX;
-          } else {
-            // Moving left: check if we just passed this string
-            crossed = lastX >= stringX && fingertip.x < stringX;
+        // Find the string index for current and last position
+        const getStringIndex = (x: number) => {
+          for (let i = 0; i < displayStrings.length; i++) {
+            const stringX = stringSpacing * (i + 1);
+            if (Math.abs(x - stringX) < stringSpacing * 0.5) {
+              return i;
+            }
           }
-          
-          if (crossed) {
-            const now = Date.now();
-            const timeSinceLastNote = now - lastNoteTime;
-            
-            // Dynamic timing based on movement
-            const minNoteSpacing = isGlissando ? 
-              Math.max(30, 50 - movementSpeed * 0.2) : // Faster movement = closer notes
-              100; // Individual plucks need more space
-            
-            if (timeSinceLastNote >= minNoteSpacing) {
-              const actualNote = getActualNote(string);
-              const velocity = isGlissando ? 0.4 : 0.6;
-              
-              console.log('Triggering string:', index, 'note:', actualNote, 'velocity:', velocity);
-              
-              // Play the note
-              onStringPlucked(index, actualNote, velocity);
-              setLastNoteTime(now);
+          return -1;
+        };
+
+        const currentStringIndex = getStringIndex(fingertip.x);
+        const lastStringIndex = getStringIndex(lastX);
+        
+        // If we're over a string
+        if (currentStringIndex !== -1) {
+          // Single string pluck (no movement or same string)
+          if (lastStringIndex === -1 || currentStringIndex === lastStringIndex) {
+            // Only play if this is a new touch or enough time has passed
+            if (lastPlayedStringIndex !== currentStringIndex || Date.now() - lastPlayedTime > 100) {
+              const actualNote = getActualNote(displayStrings[currentStringIndex]);
+              console.log('Playing single string:', currentStringIndex, 'note:', actualNote);
+              onStringPlucked(currentStringIndex, actualNote, 0.5);
+              setLastPlayedStringIndex(currentStringIndex);
+              setLastPlayedTime(Date.now());
               
               // Visual feedback
-              setVibratingStrings(prev => new Set(prev).add(index));
+              setVibratingStrings(prev => new Set(prev).add(currentStringIndex));
               setTimeout(() => {
                 setVibratingStrings(prev => {
                   const next = new Set(prev);
-                  next.delete(index);
+                  next.delete(currentStringIndex);
                   return next;
                 });
-              }, 300);
+              }, 500);
+            }
+          } 
+          // Glissando (moved to a different string)
+          else if (lastStringIndex !== -1 && currentStringIndex !== lastStringIndex) {
+          // Find all strings between last and current (inclusive)
+          const start = Math.min(lastStringIndex, currentStringIndex);
+          const end = Math.max(lastStringIndex, currentStringIndex);
+          const isMovingRight = currentStringIndex > lastStringIndex;
+          
+          // Play each string in order (excluding the starting position)
+          let noteDelay = 0;
+          
+          if (isMovingRight) {
+            // Moving right: play from lastStringIndex+1 to currentStringIndex
+            for (let i = lastStringIndex + 1; i <= currentStringIndex; i++) {
+              const actualNote = getActualNote(displayStrings[i]);
+              
+              setTimeout(() => {
+                console.log('Playing string:', i, 'note:', actualNote);
+                onStringPlucked(i, actualNote, 0.4);
+                
+                // Visual feedback
+                setVibratingStrings(prev => new Set(prev).add(i));
+                setTimeout(() => {
+                  setVibratingStrings(prev => {
+                    const next = new Set(prev);
+                    next.delete(i);
+                    return next;
+                  });
+                }, 500);
+              }, noteDelay);
+              
+              noteDelay += 25; // 25ms between notes
+            }
+          } else {
+            // Moving left: play from lastStringIndex-1 down to currentStringIndex
+            for (let i = lastStringIndex - 1; i >= currentStringIndex; i--) {
+              const actualNote = getActualNote(displayStrings[i]);
+              
+              setTimeout(() => {
+                console.log('Playing string:', i, 'note:', actualNote);
+                onStringPlucked(i, actualNote, 0.4);
+                
+                // Visual feedback
+                setVibratingStrings(prev => new Set(prev).add(i));
+                setTimeout(() => {
+                  setVibratingStrings(prev => {
+                    const next = new Set(prev);
+                    next.delete(i);
+                    return next;
+                  });
+                }, 500);
+              }, noteDelay);
+              
+              noteDelay += 25; // 25ms between notes
             }
           }
-        });
+          
+          setLastPlayedStringIndex(currentStringIndex);
+          }
+        }
 
         setLastFingertipPositions(prev => new Map(prev).set(fingerId, fingertip.x));
       });
     }
-  }, [fingertipPositions, onStringPlucked, displayStrings, stringSpacing, pedalPositions]);
+  }, [fingertipPositions, onStringPlucked, displayStrings, stringSpacing, pedalPositions, lastPlayedStringIndex, lastPlayedTime]);
 
   return (
     <div className="harp-overlay" style={{ width, height }}>
