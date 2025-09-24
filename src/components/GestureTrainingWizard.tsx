@@ -9,18 +9,7 @@ interface GestureTrainingWizardProps {
   onBack: () => void;
 }
 
-const PRESET_GESTURES = [
-  'Wave',
-  'Point',
-  'Swipe Left',
-  'Swipe Right',
-  'Raise Hand',
-  'Circle',
-  'Push',
-  'Pull',
-  'Clap',
-  'Peace Sign'
-];
+const PRESET_GESTURES: string[] = [];
 
 const TRAINING_STEPS = {
   SELECT_GESTURES: 'select_gestures',

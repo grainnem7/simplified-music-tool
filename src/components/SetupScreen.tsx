@@ -105,10 +105,6 @@ function SetupScreen({ onComplete }: SetupScreenProps) {
         <div className="gesture-mode-info">
           <p>Gesture Mode lets you train custom gestures to control music.</p>
           <ul>
-            <li>Choose 1-5 gestures to train</li>
-            <li>Record idle movement and gesture repetitions</li>
-            <li>The AI will learn to recognize your unique gestures</li>
-            <li>Use gestures to trigger musical events</li>
           </ul>
         </div>
       )}
