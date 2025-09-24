@@ -7,6 +7,7 @@ import HarpPedals, { DEFAULT_PRESETS } from './HarpPedals'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import { useHandDetection } from '../hooks/useHandDetection'
+import { useGestureDetection } from '../hooks/useGestureDetection'
 import { createHarpSynth, playHarpNote } from '../services/harpMusic'
 import { HAND_LANDMARKS } from '../services/handDetection'
 import './PerformanceView.css'
@@ -24,11 +25,12 @@ const HARP_RANGES = [
 
 interface PerformanceViewProps {
   selectedBodyParts: string[]
-  musicMode: 'standard' | 'harp'
+  musicMode: 'standard' | 'harp' | 'gesture'
+  gestureProfile?: string
   onBackToSetup: () => void
 }
 
-function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: PerformanceViewProps) {
+function PerformanceView({ selectedBodyParts, musicMode, gestureProfile, onBackToSetup }: PerformanceViewProps) {
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
@@ -49,6 +51,13 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
   const { generateMusic, stopMusic, isMobile } = useMusicGeneration()
   const { hands, startDetection: startHandDetection, stopDetection: stopHandDetection } = useHandDetection(webcamRef)
+  const {
+    detectedGesture,
+    confidence: gestureConfidence,
+    startDetection: startGestureDetection,
+    stopDetection: stopGestureDetection,
+    error: gestureError
+  } = useGestureDetection(webcamRef, { profileName: gestureProfile })
 
   useEffect(() => {
     if (isPerforming && poses && musicMode === 'standard') {
@@ -138,11 +147,13 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
     try {
       setError('')
       if (isPerforming) {
-        // Stop both detection types in case we're using fallback
+        // Stop all detection types
         stopHandDetection()
         stopDetection()
         if (musicMode === 'standard') {
           stopMusic()
+        } else if (musicMode === 'gesture') {
+          stopGestureDetection()
         }
         setIsPerforming(false)
         return
@@ -179,13 +190,21 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
         await startDetection()
         console.log('Pose detection started successfully')
         
-        // Additionally try hand detection for harp mode
+        // Start appropriate detection based on mode
         if (musicMode === 'harp') {
           try {
             await startHandDetection()
             console.log('Hand detection started successfully')
           } catch (handErr) {
             console.warn('Hand detection failed, will use wrist tracking only:', handErr)
+          }
+        } else if (musicMode === 'gesture') {
+          try {
+            await startGestureDetection()
+            console.log('Gesture detection started successfully')
+          } catch (gestErr) {
+            console.warn('Gesture detection failed:', gestErr)
+            setError('Failed to start gesture detection')
           }
         }
         
@@ -224,7 +243,7 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
         </div>
       )}
       
-      <div className={`performance-area ${musicMode === 'harp' ? 'harp-mode' : ''}`}>
+      <div className={`performance-area ${musicMode === 'harp' ? 'harp-mode' : musicMode === 'gesture' ? 'gesture-mode' : ''}`}>
         <div className="webcam-container">
           <WebcamCapture 
             ref={webcamRef} 
@@ -287,7 +306,7 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
                 />
               </div>
             </>
-          ) : (
+          ) : musicMode === 'harp' ? (
             <div className="harp-info-panel">
               <h3>Harp Mode</h3>
               <p>Move your hands across the strings to play!</p>
@@ -308,6 +327,39 @@ function PerformanceView({ selectedBodyParts, musicMode, onBackToSetup }: Perfor
                   <br />
                   <small>Debug: hands={!!hands}, poses={!!poses}</small>
                 </div>
+              )}
+            </div>
+          ) : (
+            <div className="gesture-info-panel">
+              <h3>Gesture Mode</h3>
+              {gestureProfile && <p className="gesture-profile">Profile: {gestureProfile}</p>}
+              {isPerforming && (
+                <div className="gesture-detection-display">
+                  {detectedGesture ? (
+                    <div className="detected-gesture-info">
+                      <h4 className="gesture-name">{detectedGesture}</h4>
+                      <div className="confidence-bar">
+                        <div
+                          className="confidence-fill"
+                          style={{ width: `${gestureConfidence * 100}%` }}
+                        />
+                      </div>
+                      <p className="confidence-text">{(gestureConfidence * 100).toFixed(0)}% confidence</p>
+                    </div>
+                  ) : (
+                    <p className="waiting-gesture">Waiting for gesture...</p>
+                  )}
+                </div>
+              )}
+              {gestureError && (
+                <div className="gesture-error">
+                  <span>⚠️</span> {gestureError}
+                </div>
+              )}
+              {!isPerforming && (
+                <p className="gesture-instructions">
+                  Click "Start Performance" to begin gesture detection
+                </p>
               )}
             </div>
           )}

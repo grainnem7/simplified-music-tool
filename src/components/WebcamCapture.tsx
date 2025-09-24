@@ -1,5 +1,6 @@
-import { forwardRef, useRef, useEffect, useState } from 'react'
+import { forwardRef, useRef, useEffect, useState, useCallback } from 'react'
 import Webcam from 'react-webcam'
+import { getSharedPoseDetector } from '../services/sharedPoseDetector'
 import HarpOverlay from './HarpOverlay'
 import './WebcamCapture.css'
 
@@ -11,6 +12,8 @@ interface WebcamCaptureProps {
   onHarpStringPlucked?: (stringIndex: number, note: string) => void
   fingertipPositions?: Array<{ x: number; y: number; finger: string; hand: 'left' | 'right' }>
   harpRange?: { name: string; startString: number; endString: number; description: string }
+  onStream?: (stream: MediaStream) => void
+  onPoseDetected?: (pose: any) => void
 }
 
 // Format keypoint names to be more user-friendly
@@ -61,17 +64,22 @@ const mapKeypointToBodyPartId = (keypointName: string): string => {
   return '';
 }
 
-const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({ 
-  poses, 
+const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
+  poses,
   selectedBodyParts = [],
   showHarpOverlay = false,
   harpPedalPositions = {},
   onHarpStringPlucked,
   fingertipPositions,
-  harpRange
+  harpRange,
+  onStream,
+  onPoseDetected
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showLabels, setShowLabels] = useState(false)
+  const internalWebcamRef = useRef<Webcam>(null)
+  const detectorRef = useRef<any>(null)
+  const animationFrameRef = useRef<number>()
   
   // Check if we're on a mobile device
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -269,15 +277,105 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
     
   }, [poses, isMobile, showLabels, selectedBodyParts]) // Will re-run when poses or selectedBodyParts change
 
+  // Handle webcam stream ready
+  const handleUserMedia = useCallback((stream: MediaStream) => {
+    console.log('WebcamCapture: Stream ready', stream);
+    if (onStream) {
+      console.log('WebcamCapture: Calling onStream callback');
+      onStream(stream);
+    }
+
+    // If we have onPoseDetected callback, start pose detection
+    if (onPoseDetected) {
+      console.log('WebcamCapture: Starting pose detection');
+      initializePoseDetection();
+    }
+  }, [onStream, onPoseDetected]);
+
+  // Initialize pose detection
+  const initializePoseDetection = useCallback(async () => {
+    try {
+      console.log('Getting shared pose detector...');
+      detectorRef.current = await getSharedPoseDetector();
+      console.log('Got shared pose detector');
+      // Start detection loop
+      const detectLoop = async () => {
+        const webcamElement = ref && typeof ref === 'object' && 'current' in ref ? ref.current : internalWebcamRef.current;
+
+        if (!detectorRef.current || !webcamElement || !webcamElement.video || !onPoseDetected) {
+          if (!detectorRef.current) console.log('No detector');
+          if (!webcamElement) console.log('No webcam element');
+          if (webcamElement && !webcamElement.video) console.log('No video element');
+          if (!onPoseDetected) console.log('No onPoseDetected callback');
+          // Retry after a short delay
+          setTimeout(() => {
+            animationFrameRef.current = requestAnimationFrame(detectLoop);
+          }, 100);
+          return;
+        }
+
+        try {
+          const video = webcamElement.video;
+          if (video.readyState === 4) {
+            // Ensure video has actual dimensions
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+              // Video not ready yet, retry
+              setTimeout(() => {
+                animationFrameRef.current = requestAnimationFrame(detectLoop);
+              }, 100);
+              return;
+            }
+
+            try {
+              const poses = await detectorRef.current.estimatePoses(video);
+              if (poses && poses.length > 0) {
+                if (onPoseDetected) {
+                  onPoseDetected(poses[0]);
+                }
+              }
+            } catch (detectionError) {
+              console.error('Error during pose estimation:', detectionError);
+            }
+          } else {
+            if (Math.random() < 0.01) {
+              console.log('Video not ready:', video.readyState);
+            }
+          }
+        } catch (error) {
+          console.error('Pose detection error:', error);
+        }
+
+        // Continue detection
+        animationFrameRef.current = requestAnimationFrame(detectLoop);
+      };
+      detectLoop();
+    } catch (error) {
+      console.error('Failed to initialize pose detection:', error);
+    }
+  }, [ref, onPoseDetected]);
+
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      // Don't dispose shared detector - it's reused across components
+      detectorRef.current = null;
+    };
+  }, [])
+
 
   return (
     <div className="webcam-container">
       <Webcam
-        ref={ref}
+        ref={ref || internalWebcamRef}
         audio={false}
         videoConstraints={videoConstraints}
         mirrored={true}
         className="webcam-video"
+        onUserMedia={handleUserMedia}
       />
       <canvas
         ref={canvasRef}

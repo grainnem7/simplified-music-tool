@@ -11,7 +11,8 @@ type AppState = 'welcome' | 'setup' | 'performance'
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('welcome')
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([])
-  const [musicMode, setMusicMode] = useState<'standard' | 'harp'>('standard')
+  const [musicMode, setMusicMode] = useState<'standard' | 'harp' | 'gesture'>('standard')
+  const [gestureProfile, setGestureProfile] = useState<string | undefined>()
   
   // Remove any GitHub corners that might be present from previous builds
   useEffect(() => {
@@ -25,9 +26,10 @@ function App() {
     setCurrentState('setup')
   }
 
-  const handleSetupComplete = (bodyParts: string[], mode: 'standard' | 'harp') => {
+  const handleSetupComplete = (bodyParts: string[], mode: 'standard' | 'harp' | 'gesture', profile?: string) => {
     setSelectedBodyParts(bodyParts)
     setMusicMode(mode)
+    setGestureProfile(profile)
     setCurrentState('performance')
   }
 
@@ -45,9 +47,10 @@ function App() {
           {currentState === 'welcome' && <WelcomeScreen onStart={handleStart} />}
           {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
           {currentState === 'performance' && (
-            <PerformanceView 
-              selectedBodyParts={selectedBodyParts} 
+            <PerformanceView
+              selectedBodyParts={selectedBodyParts}
               musicMode={musicMode}
+              gestureProfile={gestureProfile}
               onBackToSetup={handleBackToSetup}
             />
           )}
