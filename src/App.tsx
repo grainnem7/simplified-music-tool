@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import WelcomeScreen from './components/WelcomeScreen'
 import SetupScreen from './components/SetupScreen'
 import PerformanceView from './components/PerformanceView'
 import ThemeSelector from './components/ThemeSelector'
 import { ThemeProvider } from './contexts/ThemeContext'
 
-type AppState = 'welcome' | 'setup' | 'performance'
+type AppState = 'setup' | 'performance'
 
 function App() {
-  const [currentState, setCurrentState] = useState<AppState>('welcome')
+  const [currentState, setCurrentState] = useState<AppState>('setup')
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([])
-  const [musicMode, setMusicMode] = useState<'standard' | 'harp'>('standard')
-  
+
   // Remove any GitHub corners that might be present from previous builds
   useEffect(() => {
     const githubCorner = document.querySelector('.github-corner')
@@ -21,13 +19,8 @@ function App() {
     }
   }, [])
 
-  const handleStart = () => {
-    setCurrentState('setup')
-  }
-
-  const handleSetupComplete = (bodyParts: string[], mode: 'standard' | 'harp') => {
+  const handleSetupComplete = (bodyParts: string[]) => {
     setSelectedBodyParts(bodyParts)
-    setMusicMode(mode)
     setCurrentState('performance')
   }
 
@@ -42,12 +35,10 @@ function App() {
           <ThemeSelector />
         </header>
         <main id="main-content">
-          {currentState === 'welcome' && <WelcomeScreen onStart={handleStart} />}
           {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
           {currentState === 'performance' && (
-            <PerformanceView 
-              selectedBodyParts={selectedBodyParts} 
-              musicMode={musicMode}
+            <PerformanceView
+              selectedBodyParts={selectedBodyParts}
               onBackToSetup={handleBackToSetup}
             />
           )}

@@ -1,59 +1,57 @@
 .welcome-description {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   color: var(--text-secondary);
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+  font-weight: 400;
 }
 
 .welcome-content {
   max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.container h1 {
+  font-size: 3.5rem;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+  letter-spacing: -0.03em;
 }
 
 .feature-list {
-  list-style: none;
-  padding: 0;
-  margin: 2rem 0;
-  text-align: left;
-}
-
-.feature-list li {
-  padding: 0.75rem 0;
-  color: var(--text-secondary);
-  position: relative;
-  padding-left: 2rem;
-}
-
-.feature-list li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: var(--success-color);
-  font-weight: bold;
-  font-size: 1.2rem;
+  display: none;
 }
 
 .primary-button {
   background-color: var(--accent-color);
   color: white;
-  padding: 0.8rem 2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  padding: 1rem 3rem;
+  font-size: 1rem;
+  font-weight: 500;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 1rem;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  letter-spacing: 0.01em;
 }
 
 .primary-button:hover {
-  background-color: var(--accent-color);
-  opacity: 0.9;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.25);
+}
+
+.primary-button:active {
+  transform: translateY(0);
 }
 
 .primary-button:focus {
@@ -70,4 +68,18 @@
 [data-theme="highContrast"] .feature-list li::before {
   color: var(--success-color);
   font-weight: bold;
+}
+
+[data-theme="highContrast"] .container h1 {
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .container h1 {
+    font-size: 2.5rem;
+  }
+
+  .welcome-description {
+    font-size: 1.125rem;
+  }
 }

@@ -4,78 +4,84 @@ interface BodyDiagramProps {
   selectedParts: string[]
 }
 
-const BODY_PART_POSITIONS: Record<string, { x: number; y: number; label: string }> = {
-  // Face/Head
-  nose: { x: 100, y: 40, label: 'Head' },
-  leftEye: { x: 90, y: 35, label: 'L Eye' },
-  rightEye: { x: 110, y: 35, label: 'R Eye' },
-  
-  // Upper body
-  leftShoulder: { x: 70, y: 80, label: 'L Shoulder' },
-  rightShoulder: { x: 130, y: 80, label: 'R Shoulder' },
-  leftElbow: { x: 50, y: 120, label: 'L Elbow' },
-  rightElbow: { x: 150, y: 120, label: 'R Elbow' },
-  leftWrist: { x: 40, y: 150, label: 'L Wrist' },
-  rightWrist: { x: 160, y: 150, label: 'R Wrist' },
-  
-  // Lower body
-  leftHip: { x: 85, y: 140, label: 'L Hip' },
-  rightHip: { x: 115, y: 140, label: 'R Hip' },
-  leftKnee: { x: 80, y: 190, label: 'L Knee' },
-  rightKnee: { x: 120, y: 190, label: 'R Knee' },
-  leftAnkle: { x: 75, y: 240, label: 'L Ankle' },
-  rightAnkle: { x: 125, y: 240, label: 'R Ankle' },
-}
+// Complete body parts including eyes, no nose
+const BODY_PARTS = [
+  { id: 'leftEye', x: 185, y: 55, label: 'L Eye' },
+  { id: 'rightEye', x: 215, y: 55, label: 'R Eye' },
+  { id: 'leftShoulder', x: 160, y: 140, label: 'L Shoulder' },
+  { id: 'rightShoulder', x: 240, y: 140, label: 'R Shoulder' },
+  { id: 'leftElbow', x: 130, y: 200, label: 'L Elbow' },
+  { id: 'rightElbow', x: 270, y: 200, label: 'R Elbow' },
+  { id: 'leftWrist', x: 110, y: 260, label: 'L Wrist' },
+  { id: 'rightWrist', x: 290, y: 260, label: 'R Wrist' },
+  { id: 'leftHip', x: 175, y: 240, label: 'L Hip' },
+  { id: 'rightHip', x: 225, y: 240, label: 'R Hip' },
+  { id: 'leftKnee', x: 170, y: 320, label: 'L Knee' },
+  { id: 'rightKnee', x: 230, y: 320, label: 'R Knee' },
+  { id: 'leftAnkle', x: 165, y: 400, label: 'L Ankle' },
+  { id: 'rightAnkle', x: 235, y: 400, label: 'R Ankle' },
+]
 
 function BodyDiagram({ selectedParts }: BodyDiagramProps) {
   return (
-    <div className="body-diagram">
-      <svg viewBox="0 0 200 260" className="body-svg">
-        {/* Simple body outline */}
-        <g className="body-outline">
-          {/* Head */}
-          <circle cx="100" cy="40" r="20" />
-          
+    <div className="body-diagram-container">
+      <svg viewBox="0 0 400 450" className="body-svg" xmlns="http://www.w3.org/2000/svg">
+        {/* Simple stick figure */}
+        <g className="body-figure" strokeLinecap="round" strokeLinejoin="round">
+          {/* Head circle */}
+          <circle cx="200" cy="60" r="32" />
+
+          {/* Eyes within head */}
+          <circle cx="185" cy="55" r="4" className="eye-outline" />
+          <circle cx="215" cy="55" r="4" className="eye-outline" />
+
           {/* Torso */}
-          <line x1="100" y1="60" x2="100" y2="140" />
-          
-          {/* Arms */}
-          <line x1="100" y1="80" x2="70" y2="80" />
-          <line x1="70" y1="80" x2="50" y2="120" />
-          <line x1="50" y1="120" x2="40" y2="150" />
-          
-          <line x1="100" y1="80" x2="130" y2="80" />
-          <line x1="130" y1="80" x2="150" y2="120" />
-          <line x1="150" y1="120" x2="160" y2="150" />
-          
-          {/* Legs */}
-          <line x1="100" y1="140" x2="85" y2="140" />
-          <line x1="85" y1="140" x2="80" y2="190" />
-          <line x1="80" y1="190" x2="75" y2="240" />
-          
-          <line x1="100" y1="140" x2="115" y2="140" />
-          <line x1="115" y1="140" x2="120" y2="190" />
-          <line x1="120" y1="190" x2="125" y2="240" />
+          <line x1="200" y1="92" x2="200" y2="240" strokeWidth="3" />
+
+          {/* Shoulders */}
+          <line x1="160" y1="140" x2="240" y2="140" strokeWidth="3" />
+
+          {/* Left arm */}
+          <line x1="160" y1="140" x2="130" y2="200" strokeWidth="2.5" />
+          <line x1="130" y1="200" x2="110" y2="260" strokeWidth="2.5" />
+
+          {/* Right arm */}
+          <line x1="240" y1="140" x2="270" y2="200" strokeWidth="2.5" />
+          <line x1="270" y1="200" x2="290" y2="260" strokeWidth="2.5" />
+
+          {/* Hips */}
+          <line x1="175" y1="240" x2="225" y2="240" strokeWidth="3" />
+
+          {/* Left leg */}
+          <line x1="175" y1="240" x2="170" y2="320" strokeWidth="2.5" />
+          <line x1="170" y1="320" x2="165" y2="400" strokeWidth="2.5" />
+
+          {/* Right leg */}
+          <line x1="225" y1="240" x2="230" y2="320" strokeWidth="2.5" />
+          <line x1="230" y1="320" x2="235" y2="400" strokeWidth="2.5" />
         </g>
-        
-        {/* Body part dots with labels */}
-        {Object.entries(BODY_PART_POSITIONS).map(([partId, position]) => {
-          const isSelected = selectedParts.includes(partId)
+
+        {/* Interactive body points - simple dots only */}
+        {BODY_PARTS.map((part) => {
+          const isSelected = selectedParts.includes(part.id)
           return (
-            <g key={partId}>
+            <g key={part.id} className="body-point-group">
+              {/* Simple dot */}
               <circle
-                cx={position.x}
-                cy={position.y}
-                r="6"
-                className={`body-point ${isSelected ? 'active' : ''}`}
+                cx={part.x}
+                cy={part.y}
+                r="7"
+                className={`body-point ${isSelected ? 'selected' : ''}`}
               />
-              {/* Static highlight instead of animation */}
+
+              {/* Label always visible */}
               <text
-                x={position.x}
-                y={position.y - 10}
-                className="body-label"
+                x={part.x}
+                y={part.y - 20}
+                className={`point-label ${isSelected ? 'selected' : ''}`}
+                textAnchor="middle"
               >
-                {position.label}
+                {part.label}
               </text>
             </g>
           )

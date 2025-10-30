@@ -9,7 +9,6 @@ const BODY_PART_GROUPS = {
   face: {
     label: 'Head',
     parts: [
-      { id: 'nose', label: 'Head' },
       { id: 'leftEye', label: 'Left Eye' },
       { id: 'rightEye', label: 'Right Eye' },
     ]
@@ -60,34 +59,33 @@ function BodyPartSelector({ selectedParts, onSelectionChange }: BodyPartSelector
 
   return (
     <div className="body-part-selector">
-      <div className="selector-header">
-        <h3>Select Body Parts to Track</h3>
-        <button 
-          onClick={toggleAll}
-          className="toggle-all-button"
-          aria-label={selectedParts.length === allPartsCount ? 'Deselect all body parts' : 'Select all body parts'}
-        >
+      <div className="selector-actions">
+        <button onClick={toggleAll} className="select-all-button">
           {selectedParts.length === allPartsCount ? 'Deselect All' : 'Select All'}
         </button>
       </div>
-      
-      <div className="body-parts-container">
+
+      <div className="body-parts-grid">
         {Object.entries(BODY_PART_GROUPS).map(([groupKey, group]) => (
-          <div key={groupKey} className="body-part-group">
-            <h4>{group.label}</h4>
-            <div className="body-parts-list">
-              {group.parts.map(part => (
-                <label key={part.id} className="body-part-option">
+          <div key={groupKey} className="body-part-category">
+            <div className="category-header">{group.label}</div>
+            {group.parts.map(part => {
+              const isSelected = selectedParts.includes(part.id)
+              return (
+                <label
+                  key={part.id}
+                  className={`body-part-item ${isSelected ? 'selected' : ''}`}
+                >
                   <input
                     type="checkbox"
-                    checked={selectedParts.includes(part.id)}
+                    className="body-part-checkbox"
+                    checked={isSelected}
                     onChange={() => togglePart(part.id)}
-                    aria-label={`Select ${part.label}`}
                   />
-                  <span>{part.label}</span>
+                  <span className="body-part-label">{part.label}</span>
                 </label>
-              ))}
-            </div>
+              )
+            })}
           </div>
         ))}
       </div>

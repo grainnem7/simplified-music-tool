@@ -13,15 +13,6 @@ interface WebcamCaptureProps {
   harpRange?: { name: string; startString: number; endString: number; description: string }
 }
 
-// Format keypoint names to be more user-friendly
-const formatKeypointName = (name: string): string => {
-  return name
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-}
-
 // Convert TensorFlow keypoint name to our body part ID
 const mapKeypointToBodyPartId = (keypointName: string): string => {
   keypointName = keypointName.toLowerCase();
@@ -71,7 +62,7 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
   harpRange
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [showLabels, setShowLabels] = useState(false)
+  const [showLabels, setShowLabels] = useState(true)
   
   // Check if we're on a mobile device
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -123,33 +114,32 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
       const pose = poses[0]
       // Get colors from theme
       const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color')
-      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
-      const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary')
       
       // Mobile optimization flag
       const simplifiedRendering = isMobile
       
-      // Draw connections for skeleton
+      // Draw connections for skeleton - sleeker style
       ctx.strokeStyle = accentColor
-      ctx.globalAlpha = 0.6
-      ctx.lineWidth = simplifiedRendering ? 2 : 3
-      
+      ctx.globalAlpha = 0.4
+      ctx.lineWidth = simplifiedRendering ? 1.5 : 2
+      ctx.lineCap = 'round'
+
       connections.forEach(([start, end]) => {
-        
+
         // Helper function to check if a keypoint is selected
         const isKeypointSelected = (name: string) => {
           const bodyPartId = mapKeypointToBodyPartId(name);
           return bodyPartId && selectedBodyParts.includes(bodyPartId);
         };
-        
+
         // Skip connections if either keypoint is not selected
         if (!isKeypointSelected(start) || !isKeypointSelected(end)) {
           return;
         }
-        
+
         const startKeypoint = pose.keypoints.find((kp: any) => kp.name === start)
         const endKeypoint = pose.keypoints.find((kp: any) => kp.name === end)
-        
+
         // Only draw connections with sufficient confidence
         const minScore = simplifiedRendering ? 0.2 : 0.3
         if (startKeypoint?.score > minScore && endKeypoint?.score > minScore) {
@@ -157,14 +147,14 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
           const startY = startKeypoint.y * canvas.height
           const endX = (1 - endKeypoint.x) * canvas.width
           const endY = endKeypoint.y * canvas.height
-          
+
           ctx.beginPath()
           ctx.moveTo(startX, startY)
           ctx.lineTo(endX, endY)
           ctx.stroke()
         }
       })
-      
+
       ctx.globalAlpha = 1.0
 
       // Draw keypoints
@@ -185,16 +175,25 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
           // Convert normalized coordinates to canvas coordinates
           const x = (1 - keypoint.x) * canvas.width  // Mirror X coordinate
           const y = keypoint.y * canvas.height
-          
-          // Draw keypoint dot
+
+          // Draw sleeker keypoint dot with glow effect
+          // Outer glow
+          ctx.fillStyle = accentColor
+          ctx.globalAlpha = 0.2
+          ctx.beginPath()
+          ctx.arc(x, y, simplifiedRendering ? 8 : 10, 0, 2 * Math.PI)
+          ctx.fill()
+
+          // Inner dot
+          ctx.globalAlpha = 1.0
           ctx.fillStyle = accentColor
           ctx.beginPath()
-          ctx.arc(x, y, simplifiedRendering ? 6 : 8, 0, 2 * Math.PI)
+          ctx.arc(x, y, simplifiedRendering ? 4 : 5, 0, 2 * Math.PI)
           ctx.fill()
-          
-          // Add a border for better visibility
-          ctx.strokeStyle = textColor
-          ctx.lineWidth = simplifiedRendering ? 1 : 2
+
+          // Subtle border
+          ctx.strokeStyle = '#ffffff'
+          ctx.lineWidth = 1.5
           ctx.stroke()
           
           // Only show labels if the toggle is on
@@ -204,64 +203,70 @@ const WebcamCapture = forwardRef<Webcam, WebcamCaptureProps>(({
           
           // Draw labels for all valid selected keypoints
           if (keypoint.name) {
-            const fontSize = simplifiedRendering ? 12 : 14
-            ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`
-            
-            // Create a background for the text
-            // Format names to match body part selector
+            const fontSize = simplifiedRendering ? 8 : 9
+            ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`
+            ctx.letterSpacing = '0.05em'
+
+            // Format names to uppercase abbreviated style
             let displayName;
-            
+
             const keypointLower = keypoint.name.toLowerCase();
             if (keypointLower === 'nose') {
-              displayName = 'Head';
+              displayName = 'HEAD';
             } else if (keypointLower === 'left_eye') {
-              displayName = 'Left Eye';
+              displayName = 'L EYE';
             } else if (keypointLower === 'right_eye') {
-              displayName = 'Right Eye';
+              displayName = 'R EYE';
+            } else if (keypointLower.includes('left_')) {
+              displayName = 'L ' + keypoint.name.replace('left_', '').replace(/_/g, ' ').toUpperCase();
+            } else if (keypointLower.includes('right_')) {
+              displayName = 'R ' + keypoint.name.replace('right_', '').replace(/_/g, ' ').toUpperCase();
             } else {
-              // Format other keypoints like shoulders, wrists, etc.
-              displayName = formatKeypointName(keypoint.name);
+              displayName = keypoint.name.replace(/_/g, ' ').toUpperCase();
             }
-            
+
             const textMetrics = ctx.measureText(displayName)
             const textWidth = textMetrics.width
-            const textHeight = fontSize + 2
-            const padding = simplifiedRendering ? 4 : 6
-            const borderRadius = 4
-            
-            // Position text to avoid overlapping with the dot
-            const textX = x + (simplifiedRendering ? 10 : 15)
-            const textY = y - (simplifiedRendering ? 8 : 10)
-            
-            // Draw background for text
-            ctx.fillStyle = bgColor
+            const textHeight = fontSize
+
+            // Position text closer to the dot, offset to the side
+            const textX = x + 14
+            const textY = y + 4
+            const padding = 5
+
+            // Draw solid background for maximum readability
+            ctx.globalAlpha = 0.95
+            ctx.fillStyle = '#000000'
+            ctx.beginPath()
+            ctx.roundRect(
+              textX - padding,
+              textY - textHeight,
+              textWidth + padding * 2,
+              textHeight + padding,
+              3
+            )
+            ctx.fill()
+
+            // Draw white text for maximum contrast
+            ctx.globalAlpha = 1.0
+            ctx.fillStyle = '#ffffff'
+            ctx.fillText(displayName, textX, textY)
+
+            // Draw accent color border on the background
+            ctx.strokeStyle = accentColor
+            ctx.lineWidth = 1.5
             ctx.globalAlpha = 0.9
             ctx.beginPath()
-            
-            // Use roundRect if available, otherwise fallback to regular rect
-            if (ctx.roundRect) {
-              ctx.roundRect(
-                textX - padding,
-                textY - textHeight + 2,
-                textWidth + padding * 2,
-                textHeight + padding,
-                borderRadius
-              )
-            } else {
-              ctx.rect(
-                textX - padding,
-                textY - textHeight + 2,
-                textWidth + padding * 2,
-                textHeight + padding
-              )
-            }
-            
-            ctx.fill()
+            ctx.roundRect(
+              textX - padding,
+              textY - textHeight,
+              textWidth + padding * 2,
+              textHeight + padding,
+              3
+            )
+            ctx.stroke()
+
             ctx.globalAlpha = 1.0
-            
-            // Draw text
-            ctx.fillStyle = textColor
-            ctx.fillText(displayName, textX, textY)
           }
         }
       })

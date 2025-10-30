@@ -47,14 +47,14 @@ export const getActualNote = (baseNote: string, pedalPositions: PedalPositions):
 };
 
 // Create a harp-like synth with increased polyphony
-export const createHarpSynth = (): Tone.PolySynth => {
+export const createHarpSynth = async (): Promise<Tone.PolySynth> => {
   console.log('Creating harp synth...');
-  
+
   try {
     // Start Tone.js if needed
     if (Tone.context.state !== 'running') {
       console.log('Starting Tone.js context...');
-      Tone.start();
+      await Tone.start();
     }
     
     // Create a simple, reliable harp synth
@@ -101,7 +101,19 @@ export const playHarpNote = (
   velocity: number = 0.7
 ): void => {
   try {
-    console.log('Playing harp note:', note, 'velocity:', velocity);
+    // Check audio context state
+    if (Tone.context.state !== 'running') {
+      console.warn('Audio context not running, attempting to start...');
+      Tone.start().then(() => {
+        console.log('Audio context started, playing note:', note);
+        synth.triggerAttackRelease(note, duration, undefined, velocity);
+      }).catch(err => {
+        console.error('Failed to start audio context:', err);
+      });
+      return;
+    }
+
+    console.log('Playing harp note:', note, 'velocity:', velocity, 'context state:', Tone.context.state);
     // Play the note immediately
     synth.triggerAttackRelease(note, duration, undefined, velocity);
   } catch (error) {

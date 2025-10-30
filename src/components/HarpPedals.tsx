@@ -198,9 +198,9 @@ const HarpPedals: React.FC<HarpPedalsProps> = memo(({
                 >
                   <div className="pedal-letter">{pedal}</div>
                   <div className="pedal-position">
-                    <span className={position === 'sharp' ? 'active' : ''}>♯</span>
-                    <span className={position === 'natural' ? 'active' : ''}>♮</span>
                     <span className={position === 'flat' ? 'active' : ''}>♭</span>
+                    <span className={position === 'natural' ? 'active' : ''}>♮</span>
+                    <span className={position === 'sharp' ? 'active' : ''}>♯</span>
                   </div>
                 </button>
               </div>
@@ -224,9 +224,9 @@ const HarpPedals: React.FC<HarpPedalsProps> = memo(({
                 >
                   <div className="pedal-letter">{pedal}</div>
                   <div className="pedal-position">
-                    <span className={position === 'sharp' ? 'active' : ''}>♯</span>
-                    <span className={position === 'natural' ? 'active' : ''}>♮</span>
                     <span className={position === 'flat' ? 'active' : ''}>♭</span>
+                    <span className={position === 'natural' ? 'active' : ''}>♮</span>
+                    <span className={position === 'sharp' ? 'active' : ''}>♯</span>
                   </div>
                 </button>
               </div>

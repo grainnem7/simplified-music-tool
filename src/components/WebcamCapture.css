@@ -12,33 +12,39 @@
 /* Labels toggle button */
 .labels-toggle {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
+  bottom: 1rem;
+  right: 1rem;
+  background-color: rgba(0, 0, 0, 0.6);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
+  opacity: 0.7;
+  transition: all 0.2s ease;
   z-index: 10;
+  backdrop-filter: blur(4px);
 }
 
 .labels-toggle:hover {
   opacity: 1;
+  background-color: rgba(0, 0, 0, 0.75);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 [data-theme="light"] .labels-toggle {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.65);
 }
 
 [data-theme="highContrast"] .labels-toggle {
   background-color: black;
   color: white;
   border: 2px solid white;
-  font-weight: bold;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .webcam-video {
