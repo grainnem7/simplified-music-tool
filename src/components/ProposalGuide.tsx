@@ -24,6 +24,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
+  CssBaseline,
 } from "@mui/material";
 import {
   Home,
@@ -152,8 +153,10 @@ export default function ProposalGuide({
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {/* AppBar */}
+    <>
+      <CssBaseline />
+      <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default", position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}>
+        {/* AppBar */}
       <AppBar
         position="fixed"
         sx={{
@@ -317,7 +320,8 @@ export default function ProposalGuide({
           ))}
         </Container>
       </Box>
-    </Box>
+      </Box>
+    </>
   );
 }
 
