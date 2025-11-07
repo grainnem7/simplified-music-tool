@@ -1,7 +1,39 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronRight, FileText, Home, Link as LinkIcon, Printer, Search } from "lucide-react";
-import "./ProposalGuide.css";
+import {
+  Box,
+  Container,
+  Drawer,
+  AppBar,
+  Toolbar,
+  Typography,
+  TextField,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  IconButton,
+  Button,
+  Collapse,
+  Divider,
+  Breadcrumbs,
+  Link,
+  Paper,
+  InputAdornment,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
+} from "@mui/material";
+import {
+  Home,
+  Print,
+  Search,
+  ExpandMore,
+  ExpandLess,
+  Link as LinkIcon,
+  Description,
+} from "@mui/icons-material";
 
 export type GuideBlock = {
   id: string;
@@ -16,6 +48,8 @@ export type GuideContent = {
   preface?: string;
   sections: GuideBlock[];
 };
+
+const DRAWER_WIDTH = 320;
 
 function flatten(blocks: GuideBlock[]): GuideBlock[] {
   const out: GuideBlock[] = [];
@@ -38,14 +72,22 @@ function highlight(text: string, q: string) {
   const re = new RegExp(`(${escaped})`, "ig");
   return text.split(re).map((part, i) =>
     re.test(part) ? (
-      <mark key={i}>{part}</mark>
+      <mark key={i} style={{ backgroundColor: "#fff59d", padding: "0 2px" }}>
+        {part}
+      </mark>
     ) : (
       <React.Fragment key={i}>{part}</React.Fragment>
     )
   );
 }
 
-export default function ProposalGuide({ content, projectTitle }: { content: GuideContent; projectTitle: string }) {
+export default function ProposalGuide({
+  content,
+  projectTitle,
+}: {
+  content: GuideContent;
+  projectTitle: string;
+}) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const hash = useHash();
@@ -60,20 +102,28 @@ export default function ProposalGuide({ content, projectTitle }: { content: Guid
           trail.forEach((t) => parents.add(t));
           return true;
         }
-        if (b.children && findParents(b.children, [...trail, b.id])) return true;
+        if (b.children && findParents(b.children, [...trail, b.id]))
+          return true;
       }
       return false;
     }
     findParents(content.sections);
     if (parents.size) {
-      setExpanded((e) => ({ ...e, ...Array.from(parents).reduce((acc, k) => ({ ...acc, [k]: true }), {}) }));
+      setExpanded((e) => ({
+        ...e,
+        ...Array.from(parents).reduce((acc, k) => ({ ...acc, [k]: true }), {}),
+      }));
     }
   }, [hash, content.sections]);
 
   useEffect(() => {
     if (!hash) return;
     const el = document.getElementById(hash);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
   }, [hash]);
 
   const results = useMemo(() => {
@@ -84,7 +134,12 @@ export default function ProposalGuide({ content, projectTitle }: { content: Guid
         id: b.id,
         title: b.title,
         snippet: (b.body || b.summary || "").slice(0, 200),
-        score: ((b.title + " " + (b.body || "") + " " + (b.summary || "")).toLowerCase().match(new RegExp(q, "g")) || []).length,
+        score:
+          (
+            (b.title + " " + (b.body || "") + " " + (b.summary || ""))
+              .toLowerCase()
+              .match(new RegExp(q, "g")) || []
+          ).length,
       }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -96,109 +151,173 @@ export default function ProposalGuide({ content, projectTitle }: { content: Guid
     setExpanded((e) => ({ ...e, [id]: !e[id] }));
   }
 
-  function onPrint() {
-    window.print();
-  }
-
   return (
-    <div className="proposal-guide">
-      <a href="#main" className="skip-link">Skip to content</a>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      {/* AppBar */}
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          bgcolor: "white",
+          color: "text.primary",
+          borderBottom: 1,
+          borderColor: "divider",
+          boxShadow: "none",
+        }}
+      >
+        <Toolbar>
+          <Breadcrumbs sx={{ flexGrow: 1 }}>
+            <Link
+              component={RouterLink}
+              to="/"
+              underline="hover"
+              color="inherit"
+              sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+            >
+              <Home fontSize="small" />
+              Home
+            </Link>
+            <Typography color="text.primary">Proposal</Typography>
+          </Breadcrumbs>
+          <Button
+            startIcon={<Print />}
+            onClick={() => window.print()}
+            variant="outlined"
+            size="small"
+            sx={{ textTransform: "none" }}
+          >
+            Print / Export
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-      <header>
-        <div className="header-content">
-          <div className="breadcrumb">
-            <Home size={16} aria-hidden />
-            <RouterLink to="/">Home</RouterLink>
-            <span aria-hidden>›</span>
-            <span>Proposal</span>
-          </div>
-          <div className="header-actions">
-            <button onClick={onPrint} className="btn-print">
-              <Printer size={16} /> Print / Export
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Drawer */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            boxSizing: "border-box",
+            borderRight: 1,
+            borderColor: "divider",
+          },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: "auto", p: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            {projectTitle}
+          </Typography>
+          {content.preface && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {content.preface}
+            </Typography>
+          )}
 
-      <div className="main-grid">
-        <aside className="sidebar">
-          <div className="sidebar-header">
-            <h1 className="sidebar-title">{projectTitle}</h1>
-            {content.preface && <p className="sidebar-preface">{content.preface}</p>}
-          </div>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search the guide..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 2 }}
+          />
 
-          <div className="search-box">
-            <label htmlFor="guide-search" className="skip-link">Search</label>
-            <div className="search-wrapper">
-              <Search size={16} />
-              <input
-                id="guide-search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search the guide..."
-                className="search-input"
-              />
-            </div>
-            {query && (
-              <div className="search-results">
-                <div className="search-results-title">Matches</div>
-                <ul className="search-results-list">
-                  {results.map((r) => (
-                    <li key={r.id} className="search-result-item">
-                      <a href={`#${r.id}`} className="search-result-link">
-                        <div className="search-result-title">{highlight(r.title, query)}</div>
-                        <div className="search-result-snippet">{highlight(r.snippet || "", query)}</div>
-                      </a>
-                    </li>
-                  ))}
-                  {results.length === 0 && <div className="search-no-results">No matches.</div>}
-                </ul>
-              </div>
-            )}
-          </div>
+          {query && (
+            <Paper variant="outlined" sx={{ p: 1, mb: 2 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                MATCHES
+              </Typography>
+              <List dense disablePadding>
+                {results.map((r) => (
+                  <ListItem key={r.id} disablePadding>
+                    <ListItemButton component="a" href={`#${r.id}`}>
+                      <ListItemText
+                        primary={highlight(r.title, query)}
+                        secondary={highlight(r.snippet || "", query)}
+                        primaryTypographyProps={{ variant: "body2" }}
+                        secondaryTypographyProps={{ variant: "caption" }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+                {results.length === 0 && (
+                  <Typography variant="caption" color="text.secondary">
+                    No matches.
+                  </Typography>
+                )}
+              </List>
+            </Paper>
+          )}
 
-          <nav aria-label="Table of contents" className="toc-nav">
-            <ul className="toc-list">
-              {content.sections.map((sec) => (
-                <li key={sec.id} className="toc-section">
-                  <button
-                    className="toc-section-btn"
-                    onClick={() => toggle(sec.id)}
-                    aria-expanded={!!expanded[sec.id]}
-                    aria-controls={`toc-${sec.id}`}
-                  >
-                    {expanded[sec.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <span className="toc-section-title">{sec.title}</span>
-                  </button>
-                  <div id={`toc-${sec.id}`} style={{ display: expanded[sec.id] ? 'block' : 'none' }}>
-                    <ul className="toc-subsections">
-                      <li className="toc-subsection-item">
-                        <a href={`#${sec.id}`} className="toc-subsection-link">
-                          <FileText size={16} /> Overview
-                        </a>
-                      </li>
-                      {(sec.children ?? []).map((sub) => (
-                        <li key={sub.id} className="toc-subsection-item">
-                          <a href={`#${sub.id}`} className="toc-subsection-link">
-                            <ChevronRight size={16} /> {sub.title}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
+          <Divider sx={{ my: 2 }} />
 
-        <main id="main" className="main-content">
+          <List disablePadding>
+            {content.sections.map((sec) => (
+              <Box key={sec.id}>
+                <ListItemButton onClick={() => toggle(sec.id)}>
+                  {expanded[sec.id] ? <ExpandLess /> : <ExpandMore />}
+                  <ListItemText
+                    primary={sec.title}
+                    primaryTypographyProps={{ fontWeight: 500 }}
+                  />
+                </ListItemButton>
+                <Collapse in={expanded[sec.id]} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding dense>
+                    <ListItemButton
+                      component="a"
+                      href={`#${sec.id}`}
+                      sx={{ pl: 4 }}
+                    >
+                      <Description fontSize="small" sx={{ mr: 1 }} />
+                      <ListItemText primary="Overview" />
+                    </ListItemButton>
+                    {(sec.children ?? []).map((sub) => (
+                      <ListItemButton
+                        key={sub.id}
+                        component="a"
+                        href={`#${sub.id}`}
+                        sx={{ pl: 4 }}
+                      >
+                        <ExpandMore fontSize="small" sx={{ mr: 1 }} />
+                        <ListItemText primary={sub.title} />
+                      </ListItemButton>
+                    ))}
+                  </List>
+                </Collapse>
+                <Divider />
+              </Box>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Main Content */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+        }}
+      >
+        <Toolbar />
+        <Container maxWidth="lg">
           {content.sections.map((sec) => (
             <Section key={sec.id} block={sec} query={query} />
           ))}
-        </main>
-      </div>
-    </div>
+        </Container>
+      </Box>
+    </Box>
   );
 }
 
@@ -206,7 +325,9 @@ function Section({ block, query }: { block: GuideBlock; query: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(block.id)}`;
+    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(
+      block.id
+    )}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -214,35 +335,57 @@ function Section({ block, query }: { block: GuideBlock; query: string }) {
   };
 
   return (
-    <section id={block.id} className="section">
-      <header className="section-header">
-        <h2 className="section-title">{highlight(block.title, query)}</h2>
-        <button onClick={copy} className="btn-copy no-print">
-          <LinkIcon size={16} /> {copied ? "Copied" : "Copy link"}
-        </button>
-      </header>
+    <Box id={block.id} sx={{ mb: 6 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: 1,
+          borderColor: "divider",
+          pb: 1,
+          mb: 2,
+        }}
+      >
+        <Typography variant="h4" component="h2">
+          {highlight(block.title, query)}
+        </Typography>
+        <Button
+          size="small"
+          startIcon={<LinkIcon />}
+          onClick={copy}
+          sx={{ textTransform: "none" }}
+        >
+          {copied ? "Copied" : "Copy link"}
+        </Button>
+      </Box>
 
-      {block.summary && <p className="section-summary">{highlight(block.summary, query)}</p>}
+      {block.summary && (
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {highlight(block.summary, query)}
+        </Typography>
+      )}
 
       {block.body && (
-        <div className="section-body">
-          <p>{highlight(block.body, query)}</p>
-        </div>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          {highlight(block.body, query)}
+        </Typography>
       )}
 
       {(block.children ?? []).map((sub) => (
         <SubSection key={sub.id} block={sub} query={query} />
       ))}
-    </section>
+    </Box>
   );
 }
 
 function SubSection({ block, query }: { block: GuideBlock; query: string }) {
-  const [open, setOpen] = useState(true);
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(block.id)}`;
+    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(
+      block.id
+    )}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -250,34 +393,37 @@ function SubSection({ block, query }: { block: GuideBlock; query: string }) {
   };
 
   return (
-    <div id={block.id} className="subsection">
-      <button
-        className="subsection-header"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="subsection-title">{highlight(block.title, query)}</span>
-        {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-      </button>
+    <Accordion
+      defaultExpanded
+      id={block.id}
+      sx={{ mb: 2, "&:before": { display: "none" } }}
+    >
+      <AccordionSummary expandIcon={<ExpandMore />}>
+        <Typography variant="h6">{highlight(block.title, query)}</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        {block.summary && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {highlight(block.summary, query)}
+          </Typography>
+        )}
 
-      {open && (
-        <div className="subsection-content">
-          {block.summary && <p className="subsection-summary">{highlight(block.summary, query)}</p>}
+        {block.body && (
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {highlight(block.body, query)}
+          </Typography>
+        )}
 
-          {block.body && (
-            <div className="subsection-body">
-              <p>{highlight(block.body, query)}</p>
-            </div>
-          )}
-
-          <div className="subsection-actions">
-            <button onClick={copy} className="btn-copy">
-              <LinkIcon size={16} /> {copied ? "Copied" : "Copy link"}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        <Button
+          size="small"
+          startIcon={<LinkIcon />}
+          onClick={copy}
+          sx={{ textTransform: "none" }}
+        >
+          {copied ? "Copied" : "Copy link"}
+        </Button>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -288,83 +434,75 @@ export const CONTENT = {
     {
       id: "executive-summary",
       title: "Executive Summary",
-      summary: "Clear statement of the project, who it serves, and what success looks like.",
-      body:
-        "This project develops an accessible, gesture-controlled music tool co-designed with disabled musicians, producing both a deployable instrument and a research framework for inclusive AI design.",
+      summary:
+        "Clear statement of the project, who it serves, and what success looks like.",
+      body: "This project develops an accessible, gesture-controlled music tool co-designed with disabled musicians, producing both a deployable instrument and a research framework for inclusive AI design.",
     },
     {
       id: "background-context",
       title: "Background & Context",
-      summary: "Why accessibility in AI music tools needs an embodied, disability-led approach.",
+      summary:
+        "Why accessibility in AI music tools needs an embodied, disability-led approach.",
       children: [
         {
           id: "problem-space",
           title: "Problem Space",
-          body:
-            "Existing ADMIs often assume normative bodies and stable motion capture. Disabled musicians face barriers in mapping movement to sound in flexible, expressive ways.",
+          body: "Existing ADMIs often assume normative bodies and stable motion capture. Disabled musicians face barriers in mapping movement to sound in flexible, expressive ways.",
         },
         {
           id: "contribution",
           title: "Your Contribution",
-          body:
-            "We propose an MVP → ML-enhanced pathway with co-design workshops (Drake Music NI), articulating an Embodied AI Design Principles set and a deployable browser-based tool.",
+          body: "We propose an MVP → ML-enhanced pathway with co-design workshops (Drake Music NI), articulating an Embodied AI Design Principles set and a deployable browser-based tool.",
         },
       ],
     },
     {
       id: "research-questions",
       title: "Research Questions",
-      body:
-        "RQ1: How can gesture-to-sound mappings be adapted to diverse bodies in real time? RQ2: What evaluation markers meaningfully capture embodied engagement? RQ3: Which AI filtering strategies reduce false negatives/positives without narrowing expression?",
+      body: "RQ1: How can gesture-to-sound mappings be adapted to diverse bodies in real time? RQ2: What evaluation markers meaningfully capture embodied engagement? RQ3: Which AI filtering strategies reduce false negatives/positives without narrowing expression?",
     },
     {
       id: "methodology",
       title: "Methodology",
-      summary: "Participatory design, iterative MVP cycles, and targeted ML filtering.",
+      summary:
+        "Participatory design, iterative MVP cycles, and targeted ML filtering.",
       children: [
         {
           id: "frameworks",
           title: "Theoretical & Ethical Frameworks",
-          body:
-            "Embodied music cognition, social model of disability, inclusive design; ethics focused on consent, welfare, and data minimisation.",
+          body: "Embodied music cognition, social model of disability, inclusive design; ethics focused on consent, welfare, and data minimisation.",
         },
         {
           id: "mvp-phase",
           title: "MVP Phase (Step-by-Step)",
-          body:
-            "(1) Map minimal gestures to sound. (2) Run Workshop 1 for feedback. (3) Iterate mappings and UI. (4) Accessibility testing. (5) Lock MVP for longitudinal evaluation.",
+          body: "(1) Map minimal gestures to sound. (2) Run Workshop 1 for feedback. (3) Iterate mappings and UI. (4) Accessibility testing. (5) Lock MVP for longitudinal evaluation.",
         },
         {
           id: "ml-phase",
           title: "ML Phase",
-          body:
-            "Introduce filtering/classification for stability and noise reduction. Emphasise transparency and user control over thresholds and active body parts.",
+          body: "Introduce filtering/classification for stability and noise reduction. Emphasise transparency and user control over thresholds and active body parts.",
         },
         {
           id: "evaluation",
           title: "Evaluation",
-          body:
-            "Mixed-methods: interviews, observation notes, UX scales, and gesture event analytics to triangulate musical agency and engagement.",
+          body: "Mixed-methods: interviews, observation notes, UX scales, and gesture event analytics to triangulate musical agency and engagement.",
         },
       ],
     },
     {
       id: "timeline",
       title: "Timeline",
-      body:
-        "Quarter-by-quarter plan with dependencies (workshops, ethics approvals, development sprints, conference submissions, and thesis chapters).",
+      body: "Quarter-by-quarter plan with dependencies (workshops, ethics approvals, development sprints, conference submissions, and thesis chapters).",
     },
     {
       id: "risks-mitigations",
       title: "Risks & Mitigations",
-      body:
-        "Scheduling risks, fatigue considerations, sensor/pose instability; mitigations include flexible session planning, adaptive thresholds, and offline fallbacks.",
+      body: "Scheduling risks, fatigue considerations, sensor/pose instability; mitigations include flexible session planning, adaptive thresholds, and offline fallbacks.",
     },
     {
       id: "deliverables",
       title: "Deliverables",
-      body:
-        "Accessible tool (web), documentation site, papers, datasets or configuration presets, workshop pack, design principles, and thesis chapters.",
+      body: "Accessible tool (web), documentation site, papers, datasets or configuration presets, workshop pack, design principles, and thesis chapters.",
     },
     {
       id: "appendices",
@@ -374,14 +512,12 @@ export const CONTENT = {
         {
           id: "workshop-plan",
           title: "Workshop Plan (Example)",
-          body:
-            "Agenda, roles, accessibility provisions, consent flow, feedback prompts, and debrief notes template.",
+          body: "Agenda, roles, accessibility provisions, consent flow, feedback prompts, and debrief notes template.",
         },
         {
           id: "system-diagram",
           title: "System Diagram",
-          body:
-            "High-level architecture of webcam → pose → mapping → sound engine, with adjustable filters and user profiles.",
+          body: "High-level architecture of webcam → pose → mapping → sound engine, with adjustable filters and user profiles.",
         },
       ],
     },
