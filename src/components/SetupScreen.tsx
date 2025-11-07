@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import BodyPartSelector from './BodyPartSelector'
 import BodyDiagram from './BodyDiagram'
 import './SetupScreen.css'
@@ -19,7 +20,22 @@ function SetupScreen({ onComplete }: SetupScreenProps) {
   return (
     <div className="setup-screen">
       <div className="setup-header">
-        <h1 className="setup-title">Configure Body Tracking</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+          <h1 className="setup-title">Configure Body Tracking</h1>
+          <Link
+            to="/proposal"
+            style={{
+              padding: '0.5rem 1rem',
+              border: '1px solid currentColor',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}
+          >
+            Proposal
+          </Link>
+        </div>
         <p className="setup-subtitle">
           Select the body parts you want to track for music generation
         </p>

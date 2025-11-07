@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import './App.css'
 import SetupScreen from './components/SetupScreen'
 import PerformanceView from './components/PerformanceView'
 import ThemeSelector from './components/ThemeSelector'
+import ProposalGuide, { CONTENT } from './components/ProposalGuide'
 import { ThemeProvider } from './contexts/ThemeContext'
 
 type AppState = 'setup' | 'performance'
 
-function App() {
+function MainApp() {
   const [currentState, setCurrentState] = useState<AppState>('setup')
   const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([])
 
@@ -29,21 +31,38 @@ function App() {
   }
 
   return (
+    <div className="App">
+      <header className="app-header">
+        <ThemeSelector />
+      </header>
+      <main id="main-content">
+        {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
+        {currentState === 'performance' && (
+          <PerformanceView
+            selectedBodyParts={selectedBodyParts}
+            onBackToSetup={handleBackToSetup}
+          />
+        )}
+      </main>
+    </div>
+  )
+}
+
+function App() {
+  return (
     <ThemeProvider>
-      <div className="App">
-        <header className="app-header">
-          <ThemeSelector />
-        </header>
-        <main id="main-content">
-          {currentState === 'setup' && <SetupScreen onComplete={handleSetupComplete} />}
-          {currentState === 'performance' && (
-            <PerformanceView
-              selectedBodyParts={selectedBodyParts}
-              onBackToSetup={handleBackToSetup}
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route
+          path="/proposal"
+          element={
+            <ProposalGuide
+              content={CONTENT}
+              projectTitle="Amplifying Accessibility in Artificial Music Systems"
             />
-          )}
-        </main>
-      </div>
+          }
+        />
+      </Routes>
     </ThemeProvider>
   )
 }
