@@ -13,13 +13,18 @@ import {
   InputAdornment,
   Card,
   CardContent,
+  Alert,
+  Chip,
 } from "@mui/material";
 import {
   Home,
   Print,
   Search,
   KeyboardArrowRight,
+  Code,
 } from "@mui/icons-material";
+import BodyPartSelector from "./BodyPartSelector";
+import BodyDiagram from "./BodyDiagram";
 
 export type GuideBlock = {
   id: string;
@@ -28,6 +33,7 @@ export type GuideBlock = {
   summary?: string;
   body?: string;
   children?: GuideBlock[];
+  demo?: "body-tracking" | "system-diagram";
 };
 
 export type GuideContent = {
@@ -100,6 +106,174 @@ function useHash(): string {
   return decodeURIComponent(hash.replace(/^#/, ""));
 }
 
+// Interactive demo component for body tracking
+function BodyTrackingDemo() {
+  const [selectedParts, setSelectedParts] = useState<string[]>([
+    "leftWrist",
+    "rightWrist",
+  ]);
+
+  return (
+    <Box
+      sx={{
+        my: 4,
+        p: 3,
+        bgcolor: "background.paper",
+        border: "2px solid",
+        borderColor: "primary.main",
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+        <Code sx={{ color: "primary.main" }} />
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Interactive Demo: Body Part Selection
+        </Typography>
+      </Stack>
+      <Alert severity="info" sx={{ mb: 3 }}>
+        This is a live demo of the body tracking interface. Try selecting
+        different body parts to see how the system allows users to customize
+        which movements are tracked.
+      </Alert>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+            Body Part Selector
+          </Typography>
+          <BodyPartSelector
+            selectedParts={selectedParts}
+            onSelectionChange={setSelectedParts}
+          />
+        </Box>
+        <Box>
+          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+            Visual Feedback
+          </Typography>
+          <BodyDiagram selectedParts={selectedParts} />
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              Selected: {selectedParts.length} body parts
+            </Typography>
+            <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {selectedParts.map((part) => (
+                <Chip
+                  key={part}
+                  label={part}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+// System architecture diagram
+function SystemDiagramDemo() {
+  return (
+    <Box
+      sx={{
+        my: 4,
+        p: 3,
+        bgcolor: "background.paper",
+        border: "2px solid",
+        borderColor: "primary.main",
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+        <Code sx={{ color: "primary.main" }} />
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          System Architecture Diagram
+        </Typography>
+      </Stack>
+      <Alert severity="info" sx={{ mb: 3 }}>
+        This diagram shows the data flow from webcam input through pose
+        detection to musical output.
+      </Alert>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          alignItems: "center",
+        }}
+      >
+        {[
+          {
+            label: "Webcam Input",
+            desc: "Real-time video capture",
+            color: "#4caf50",
+          },
+          { label: "↓", desc: "", color: "transparent" },
+          {
+            label: "Pose Detection (MoveNet)",
+            desc: "Extract body keypoints",
+            color: "#2196f3",
+          },
+          { label: "↓", desc: "", color: "transparent" },
+          {
+            label: "Movement Mapping",
+            desc: "Map positions to musical parameters",
+            color: "#ff9800",
+          },
+          { label: "↓", desc: "", color: "transparent" },
+          {
+            label: "Sound Engine (Tone.js)",
+            desc: "Generate music output",
+            color: "#9c27b0",
+          },
+        ].map((step, idx) =>
+          step.label === "↓" ? (
+            <Typography key={idx} variant="h4" sx={{ my: -1 }}>
+              ↓
+            </Typography>
+          ) : (
+            <Card
+              key={idx}
+              sx={{
+                width: "100%",
+                maxWidth: 500,
+                bgcolor: step.color,
+                color: "white",
+              }}
+            >
+              <CardContent sx={{ textAlign: "center" }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {step.label}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  {step.desc}
+                </Typography>
+              </CardContent>
+            </Card>
+          )
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+// Render demo based on type
+function DemoRenderer({ type }: { type: "body-tracking" | "system-diagram" }) {
+  switch (type) {
+    case "body-tracking":
+      return <BodyTrackingDemo />;
+    case "system-diagram":
+      return <SystemDiagramDemo />;
+    default:
+      return null;
+  }
+}
+
 export default function ProposalGuide({
   content,
   projectTitle,
@@ -166,22 +340,41 @@ export default function ProposalGuide({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Button
-                component={RouterLink}
-                to="/"
-                startIcon={<Home />}
-                sx={{
-                  color: "white",
-                  textTransform: "none",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.1)",
-                  },
-                }}
-              >
-                Back to Home
-              </Button>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  component={RouterLink}
+                  to="/"
+                  startIcon={<Home />}
+                  sx={{
+                    color: "white",
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.1)",
+                    },
+                  }}
+                >
+                  Back to Home
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/"
+                  variant="contained"
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.2)",
+                    color: "white",
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.3)",
+                    },
+                  }}
+                >
+                  Try It Live
+                </Button>
+              </Stack>
               <IconButton
                 onClick={() => window.print()}
                 sx={{
@@ -429,6 +622,9 @@ export default function ProposalGuide({
                     </Typography>
                   )}
 
+                  {/* Interactive Demo */}
+                  {sec.demo && <DemoRenderer type={sec.demo} />}
+
                   {/* Subsections */}
                   {(sec.children ?? []).map((sub) => (
                     <Card
@@ -473,6 +669,8 @@ export default function ProposalGuide({
                             {sub.body}
                           </Typography>
                         )}
+                        {/* Interactive Demo in subsection */}
+                        {sub.demo && <DemoRenderer type={sub.demo} />}
                       </CardContent>
                     </Card>
                   ))}
@@ -521,6 +719,7 @@ export const CONTENT = {
       title: "Background & Context",
       summary:
         "Why accessibility in AI music tools needs an embodied, disability-led approach.",
+      demo: "body-tracking",
       children: [
         {
           id: "problem-space",
@@ -596,6 +795,7 @@ export const CONTENT = {
           id: "system-diagram",
           title: "System Diagram",
           body: "High-level architecture of webcam → pose → mapping → sound engine, with adjustable filters and user profiles.",
+          demo: "system-diagram",
         },
       ],
     },
