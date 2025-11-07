@@ -227,136 +227,147 @@ export default function ProposalGuide({
           </Container>
         </Box>
 
-        {/* Main Content */}
-        <Container maxWidth="md" sx={{ py: 8 }}>
-          <Stack spacing={8}>
-            {/* Hero Section */}
-            <Box>
-              <Typography
-                variant="h3"
-                gutterBottom
-                sx={{ color: "text.primary", mb: 3 }}
-              >
-                {projectTitle}
-              </Typography>
-              {content.preface && (
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ mb: 4, maxWidth: "800px" }}
-                >
-                  {content.preface}
-                </Typography>
-              )}
-
-              {/* Search */}
-              <TextField
-                fullWidth
-                placeholder="Search..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  maxWidth: 600,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.paper",
+        {/* Main Content with Sidebar Layout */}
+        <Box sx={{ display: "flex", position: "relative", maxWidth: 1400, mx: "auto", px: 4 }}>
+          {/* Floating Sidebar Navigation */}
+          <Box
+            sx={{
+              width: 280,
+              flexShrink: 0,
+              position: "sticky",
+              top: 100,
+              height: "fit-content",
+              maxHeight: "calc(100vh - 120px)",
+              overflow: "auto",
+              display: { xs: "none", md: "block" },
+              pr: 4,
+            }}
+          >
+            <Typography variant="caption" sx={{ color: "text.disabled", mb: 2, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
+              Contents
+            </Typography>
+            <Stack spacing={0.5}>
+              {content.sections.map((sec, idx) => (
+                <Link
+                  key={sec.id}
+                  href={`#${sec.id}`}
+                  underline="none"
+                  sx={{
+                    display: "block",
+                    py: 0.75,
+                    color: "text.secondary",
+                    fontSize: "0.875rem",
+                    "&:hover": { color: "primary.main" },
+                    transition: "color 0.2s",
+                    borderLeft: "2px solid transparent",
+                    pl: 2,
                     "&:hover": {
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "primary.main",
+                      borderLeftColor: "primary.main",
+                      color: "primary.main",
+                    },
+                  }}
+                >
+                  {sec.title}
+                </Link>
+              ))}
+            </Stack>
+          </Box>
+
+          {/* Main Content Area */}
+          <Box sx={{ flexGrow: 1, maxWidth: 800, py: 8 }}>
+            <Stack spacing={8}>
+              {/* Hero Section */}
+              <Box>
+                <Typography
+                  variant="h3"
+                  gutterBottom
+                  sx={{ color: "text.primary", mb: 3 }}
+                >
+                  {projectTitle}
+                </Typography>
+                {content.preface && (
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mb: 4 }}
+                  >
+                    {content.preface}
+                  </Typography>
+                )}
+
+                {/* Search */}
+                <TextField
+                  fullWidth
+                  placeholder="Search..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: "text.disabled" }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "background.paper",
+                      "&:hover": {
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "primary.main",
+                        },
                       },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
 
-              {/* Search Results */}
-              {query && results.length > 0 && (
-                <Fade in>
-                  <Box sx={{ mt: 3 }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mb: 2, display: "block" }}
-                    >
-                      {results.length} result{results.length !== 1 ? "s" : ""}
-                    </Typography>
-                    <Stack spacing={2}>
-                      {results.map((r) => (
-                        <Link
-                          key={r.id}
-                          href={`#${r.id}`}
-                          underline="none"
-                          sx={{
-                            display: "block",
-                            p: 2,
-                            bgcolor: "background.paper",
-                            "&:hover": { bgcolor: "#f5f5f5" },
-                            transition: "background-color 0.2s",
-                          }}
-                        >
-                          <Typography variant="body2" fontWeight={500} gutterBottom>
-                            {highlight(r.title, query)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {highlight(r.snippet || "", query)}
-                          </Typography>
-                        </Link>
-                      ))}
-                    </Stack>
-                  </Box>
-                </Fade>
-              )}
-            </Box>
+                {/* Search Results */}
+                {query && results.length > 0 && (
+                  <Fade in>
+                    <Box sx={{ mt: 3 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 2, display: "block" }}
+                      >
+                        {results.length} result{results.length !== 1 ? "s" : ""}
+                      </Typography>
+                      <Stack spacing={2}>
+                        {results.map((r) => (
+                          <Link
+                            key={r.id}
+                            href={`#${r.id}`}
+                            underline="none"
+                            sx={{
+                              display: "block",
+                              p: 2,
+                              bgcolor: "background.paper",
+                              "&:hover": { bgcolor: "#f5f5f5" },
+                              transition: "background-color 0.2s",
+                            }}
+                          >
+                            <Typography variant="body2" fontWeight={500} gutterBottom>
+                              {highlight(r.title, query)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {highlight(r.snippet || "", query)}
+                            </Typography>
+                          </Link>
+                        ))}
+                      </Stack>
+                    </Box>
+                  </Fade>
+                )}
+              </Box>
 
-            <Divider />
+              <Divider />
 
-            {/* Table of Contents */}
-            <Box>
-              <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                Contents
-              </Typography>
-              <Stack spacing={1}>
-                {content.sections.map((sec, idx) => (
-                  <Link
-                    key={sec.id}
-                    href={`#${sec.id}`}
-                    underline="none"
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      py: 1,
-                      color: "text.primary",
-                      "&:hover": { color: "primary.main" },
-                      transition: "color 0.2s",
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      color="text.disabled"
-                      sx={{ minWidth: 30 }}
-                    >
-                      {String(idx + 1).padStart(2, "0")}
-                    </Typography>
-                    <Typography variant="body1">{sec.title}</Typography>
-                  </Link>
-                ))}
-              </Stack>
-            </Box>
-
-            <Divider sx={{ my: 6 }} />
-
-            {/* Sections */}
-            {content.sections.map((sec) => (
-              <Section key={sec.id} block={sec} query={query} />
-            ))}
-          </Stack>
-        </Container>
+              {/* Sections */}
+              {content.sections.map((sec) => (
+                <Section key={sec.id} block={sec} query={query} />
+              ))}
+            </Stack>
+          </Box>
+        </Box>
 
         {/* Footer spacing */}
         <Box sx={{ height: 100 }} />
