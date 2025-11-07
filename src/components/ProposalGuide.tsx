@@ -1,34 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronRight, FileText, Home, Link as LinkIcon, Printer, Search, Upload } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Home, Link as LinkIcon, Printer, Search } from "lucide-react";
+import "./ProposalGuide.css";
 
-/**
- * ProposalGuide.tsx
- * ---------------------------------------------------------------------------
- * A drop-in, ultra-clear, interactive documentation UI for your project proposal.
- *
- * Goals
- * - Clickable sections with deep links (hash routing)
- * - Search across titles & content
- * - Sticky sidebar TOC with progress highlighting
- * - Print / Export (browser print to PDF)
- * - Zero external UI deps beyond Tailwind + lucide-react
- * - Strictly no rounded corners to match your preference
- * - Accessible (ARIA roles, keyboard nav, skip links)
- *
- * Usage
- * 1) Drop this file into your React app (e.g., src/components/ProposalGuide.tsx)
- * 2) Ensure Tailwind is set up. Add `scroll-smooth` on <html> for smooth jumps.
- * 3) Render <ProposalGuide content={CONTENT} projectTitle="Amplifying Accessibility in Artificial Music Systems" />
- * 4) Optionally mount at /proposal using your Router.
- *
- * Integration (example)
- *   <Route path="/proposal" element={<ProposalGuide content={CONTENT} projectTitle="Amplifying Accessibility in Artificial Music Systems" />} />
- *
- * The CONTENT constant at the bottom shows the schema.
- */
-
-// ----------------------------- Types ------------------------------
 export type GuideBlock = {
   id: string;
   title: string;
@@ -43,7 +17,6 @@ export type GuideContent = {
   sections: GuideBlock[];
 };
 
-// -------------------------- Utilities ----------------------------
 function flatten(blocks: GuideBlock[]): GuideBlock[] {
   const out: GuideBlock[] = [];
   const visit = (b: GuideBlock) => {
@@ -65,14 +38,13 @@ function highlight(text: string, q: string) {
   const re = new RegExp(`(${escaped})`, "ig");
   return text.split(re).map((part, i) =>
     re.test(part) ? (
-      <mark key={i} className="bg-yellow-300 text-black px-0.5">{part}</mark>
+      <mark key={i}>{part}</mark>
     ) : (
       <React.Fragment key={i}>{part}</React.Fragment>
     )
   );
 }
 
-// ---------------------------- UI ---------------------------------
 export default function ProposalGuide({ content, projectTitle }: { content: GuideContent; projectTitle: string }) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -124,96 +96,91 @@ export default function ProposalGuide({ content, projectTitle }: { content: Guid
     setExpanded((e) => ({ ...e, [id]: !e[id] }));
   }
 
-  function copyLink(id: string) {
-    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(id)}`;
-    navigator.clipboard.writeText(url);
-  }
-
   function onPrint() {
     window.print();
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-black text-white px-3 py-2">Skip to content</a>
+    <div className="proposal-guide">
+      <a href="#main" className="skip-link">Skip to content</a>
 
-      <header className="border-b border-neutral-300 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-neutral-600">
-            <Home className="h-4 w-4" aria-hidden />
-            <RouterLink to="/" className="hover:underline">Home</RouterLink>
+      <header>
+        <div className="header-content">
+          <div className="breadcrumb">
+            <Home size={16} aria-hidden />
+            <RouterLink to="/">Home</RouterLink>
             <span aria-hidden>›</span>
             <span>Proposal</span>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button onClick={onPrint} className="flex items-center gap-2 border border-neutral-800 px-3 py-1 uppercase tracking-wide text-xs hover:bg-neutral-900 hover:text-white">
-              <Printer className="h-4 w-4" /> Print / Export
+          <div className="header-actions">
+            <button onClick={onPrint} className="btn-print">
+              <Printer size={16} /> Print / Export
             </button>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl grid grid-cols-12">
-        <aside className="col-span-12 md:col-span-3 lg:col-span-3 border-r border-neutral-300 bg-white sticky top-0 h-[calc(100vh-1px)] overflow-auto">
-          <div className="p-4 border-b border-neutral-300">
-            <h1 className="text-xl font-semibold leading-tight">{projectTitle}</h1>
-            {content.preface && <p className="mt-2 text-sm text-neutral-700">{content.preface}</p>}
+      <div className="main-grid">
+        <aside className="sidebar">
+          <div className="sidebar-header">
+            <h1 className="sidebar-title">{projectTitle}</h1>
+            {content.preface && <p className="sidebar-preface">{content.preface}</p>}
           </div>
 
-          <div className="p-4 border-b border-neutral-300">
-            <label htmlFor="guide-search" className="sr-only">Search</label>
-            <div className="flex items-center border border-neutral-800">
-              <Search className="h-4 w-4 ml-2" />
+          <div className="search-box">
+            <label htmlFor="guide-search" className="skip-link">Search</label>
+            <div className="search-wrapper">
+              <Search size={16} />
               <input
                 id="guide-search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search the guide..."
-                className="w-full px-2 py-2 outline-none"
+                className="search-input"
               />
             </div>
             {query && (
-              <div className="mt-3 border-t border-neutral-200 pt-3">
-                <div className="text-xs uppercase text-neutral-600 mb-2">Matches</div>
-                <ul className="space-y-2">
+              <div className="search-results">
+                <div className="search-results-title">Matches</div>
+                <ul className="search-results-list">
                   {results.map((r) => (
-                    <li key={r.id}>
-                      <a href={`#${r.id}`} className="block hover:underline">
-                        <div className="text-sm font-medium">{highlight(r.title, query)}</div>
-                        <div className="text-xs text-neutral-600">{highlight(r.snippet || "", query)}</div>
+                    <li key={r.id} className="search-result-item">
+                      <a href={`#${r.id}`} className="search-result-link">
+                        <div className="search-result-title">{highlight(r.title, query)}</div>
+                        <div className="search-result-snippet">{highlight(r.snippet || "", query)}</div>
                       </a>
                     </li>
                   ))}
-                  {results.length === 0 && <div className="text-xs text-neutral-600">No matches.</div>}
+                  {results.length === 0 && <div className="search-no-results">No matches.</div>}
                 </ul>
               </div>
             )}
           </div>
 
-          <nav aria-label="Table of contents" className="p-2">
-            <ul>
+          <nav aria-label="Table of contents" className="toc-nav">
+            <ul className="toc-list">
               {content.sections.map((sec) => (
-                <li key={sec.id} className="border-b border-neutral-200">
+                <li key={sec.id} className="toc-section">
                   <button
-                    className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-neutral-50"
+                    className="toc-section-btn"
                     onClick={() => toggle(sec.id)}
                     aria-expanded={!!expanded[sec.id]}
                     aria-controls={`toc-${sec.id}`}
                   >
-                    {expanded[sec.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    <span className="font-medium">{sec.title}</span>
+                    {expanded[sec.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <span className="toc-section-title">{sec.title}</span>
                   </button>
-                  <div id={`toc-${sec.id}`} className={expanded[sec.id] ? "block" : "hidden"}>
-                    <ul>
-                      <li className="px-6 py-2 text-sm">
-                        <a href={`#${sec.id}`} className="hover:underline inline-flex items-center gap-2">
-                          <FileText className="h-4 w-4" /> Overview
+                  <div id={`toc-${sec.id}`} style={{ display: expanded[sec.id] ? 'block' : 'none' }}>
+                    <ul className="toc-subsections">
+                      <li className="toc-subsection-item">
+                        <a href={`#${sec.id}`} className="toc-subsection-link">
+                          <FileText size={16} /> Overview
                         </a>
                       </li>
                       {(sec.children ?? []).map((sub) => (
-                        <li key={sub.id} className="px-6 py-2 text-sm">
-                          <a href={`#${sub.id}`} className="hover:underline inline-flex items-center gap-2">
-                            <ChevronRight className="h-4 w-4" /> {sub.title}
+                        <li key={sub.id} className="toc-subsection-item">
+                          <a href={`#${sub.id}`} className="toc-subsection-link">
+                            <ChevronRight size={16} /> {sub.title}
                           </a>
                         </li>
                       ))}
@@ -225,7 +192,7 @@ export default function ProposalGuide({ content, projectTitle }: { content: Guid
           </nav>
         </aside>
 
-        <main id="main" className="col-span-12 md:col-span-9 lg:col-span-9 p-6">
+        <main id="main" className="main-content">
           {content.sections.map((sec) => (
             <Section key={sec.id} block={sec} query={query} />
           ))}
@@ -236,7 +203,6 @@ export default function ProposalGuide({ content, projectTitle }: { content: Guid
 }
 
 function Section({ block, query }: { block: GuideBlock; query: string }) {
-  const ref = useRef(null);
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
@@ -248,21 +214,18 @@ function Section({ block, query }: { block: GuideBlock; query: string }) {
   };
 
   return (
-    <section id={block.id} ref={ref} className="mb-10">
-      <header className="flex items-baseline justify-between border-b border-neutral-300 pb-2">
-        <h2 className="text-2xl font-semibold tracking-tight">{highlight(block.title, query)}</h2>
-        <button
-          onClick={copy}
-          className="no-print inline-flex items-center gap-2 border border-neutral-800 px-2 py-1 text-xs uppercase hover:bg-neutral-900 hover:text-white"
-        >
-          <LinkIcon className="h-4 w-4" /> {copied ? "Copied" : "Copy link"}
+    <section id={block.id} className="section">
+      <header className="section-header">
+        <h2 className="section-title">{highlight(block.title, query)}</h2>
+        <button onClick={copy} className="btn-copy no-print">
+          <LinkIcon size={16} /> {copied ? "Copied" : "Copy link"}
         </button>
       </header>
 
-      {block.summary && <p className="mt-3 text-neutral-700">{highlight(block.summary, query)}</p>}
+      {block.summary && <p className="section-summary">{highlight(block.summary, query)}</p>}
 
       {block.body && (
-        <div className="prose prose-neutral max-w-none mt-4">
+        <div className="section-body">
           <p>{highlight(block.body, query)}</p>
         </div>
       )}
@@ -287,32 +250,29 @@ function SubSection({ block, query }: { block: GuideBlock; query: string }) {
   };
 
   return (
-    <div id={block.id} className="mt-6 border border-neutral-300">
+    <div id={block.id} className="subsection">
       <button
-        className="w-full flex items-center justify-between px-4 py-2 text-left bg-neutral-50 hover:bg-neutral-100"
+        className="subsection-header"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="font-medium">{highlight(block.title, query)}</span>
-        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        <span className="subsection-title">{highlight(block.title, query)}</span>
+        {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
       </button>
 
       {open && (
-        <div className="p-4 bg-white">
-          {block.summary && <p className="text-neutral-700 mb-2">{highlight(block.summary, query)}</p>}
+        <div className="subsection-content">
+          {block.summary && <p className="subsection-summary">{highlight(block.summary, query)}</p>}
 
           {block.body && (
-            <div className="prose prose-neutral max-w-none">
+            <div className="subsection-body">
               <p>{highlight(block.body, query)}</p>
             </div>
           )}
 
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={copy}
-              className="inline-flex items-center gap-2 border border-neutral-800 px-2 py-1 text-xs uppercase hover:bg-neutral-900 hover:text-white"
-            >
-              <LinkIcon className="h-4 w-4" /> {copied ? "Copied" : "Copy link"}
+          <div className="subsection-actions">
+            <button onClick={copy} className="btn-copy">
+              <LinkIcon size={16} /> {copied ? "Copied" : "Copy link"}
             </button>
           </div>
         </div>

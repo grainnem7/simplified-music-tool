@@ -1,0 +1,429 @@
+/* ProposalGuide.css - Scoped styles for the proposal documentation page */
+
+.proposal-guide {
+  min-height: 100vh;
+  background-color: #fafafa;
+  color: #171717;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif;
+}
+
+.proposal-guide .skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.proposal-guide .skip-link:focus {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #000;
+  color: #fff;
+  padding: 0.75rem;
+  width: auto;
+  height: auto;
+  clip: auto;
+  z-index: 9999;
+}
+
+.proposal-guide header {
+  border-bottom: 1px solid #d4d4d4;
+  background-color: #fff;
+}
+
+.proposal-guide .header-content {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.proposal-guide .breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #525252;
+}
+
+.proposal-guide .breadcrumb a {
+  color: #525252;
+  text-decoration: none;
+}
+
+.proposal-guide .breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.proposal-guide .header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.proposal-guide .btn-print {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #171717;
+  padding: 0.25rem 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.proposal-guide .btn-print:hover {
+  background-color: #171717;
+  color: #fff;
+}
+
+.proposal-guide .main-grid {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.proposal-guide .sidebar {
+  grid-column: span 12;
+  border-right: 1px solid #d4d4d4;
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 1px);
+  overflow: auto;
+}
+
+@media (min-width: 768px) {
+  .proposal-guide .sidebar {
+    grid-column: span 3;
+  }
+
+  .proposal-guide .main-content {
+    grid-column: span 9;
+  }
+}
+
+.proposal-guide .sidebar-header {
+  padding: 1rem;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.proposal-guide .sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 0.5rem 0;
+}
+
+.proposal-guide .sidebar-preface {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #404040;
+  line-height: 1.5;
+}
+
+.proposal-guide .search-box {
+  padding: 1rem;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.proposal-guide .search-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #171717;
+  background-color: #fff;
+}
+
+.proposal-guide .search-wrapper svg {
+  height: 1rem;
+  width: 1rem;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+.proposal-guide .search-input {
+  width: 100%;
+  padding: 0.5rem;
+  outline: none;
+  border: none;
+  font-size: 0.875rem;
+  background-color: transparent;
+}
+
+.proposal-guide .search-results {
+  margin-top: 0.75rem;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 0.75rem;
+}
+
+.proposal-guide .search-results-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #525252;
+  margin-bottom: 0.5rem;
+}
+
+.proposal-guide .search-results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.proposal-guide .search-result-item {
+  display: block;
+}
+
+.proposal-guide .search-result-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.proposal-guide .search-result-link:hover {
+  text-decoration: underline;
+}
+
+.proposal-guide .search-result-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.125rem;
+}
+
+.proposal-guide .search-result-snippet {
+  font-size: 0.75rem;
+  color: #525252;
+}
+
+.proposal-guide .search-no-results {
+  font-size: 0.75rem;
+  color: #525252;
+}
+
+.proposal-guide .toc-nav {
+  padding: 0.5rem;
+}
+
+.proposal-guide .toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.proposal-guide .toc-section {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.proposal-guide .toc-section-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.proposal-guide .toc-section-btn:hover {
+  background-color: #fafafa;
+}
+
+.proposal-guide .toc-section-btn svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.proposal-guide .toc-section-title {
+  font-weight: 500;
+}
+
+.proposal-guide .toc-subsections {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.proposal-guide .toc-subsection-item {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+.proposal-guide .toc-subsection-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.proposal-guide .toc-subsection-link:hover {
+  text-decoration: underline;
+}
+
+.proposal-guide .toc-subsection-link svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.proposal-guide .main-content {
+  grid-column: span 12;
+  padding: 1.5rem;
+}
+
+.proposal-guide .section {
+  margin-bottom: 2.5rem;
+}
+
+.proposal-guide .section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.proposal-guide .section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.proposal-guide .btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #171717;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.proposal-guide .btn-copy:hover {
+  background-color: #171717;
+  color: #fff;
+}
+
+.proposal-guide .section-summary {
+  margin-top: 0.75rem;
+  color: #404040;
+  line-height: 1.6;
+}
+
+.proposal-guide .section-body {
+  margin-top: 1rem;
+  max-width: none;
+  line-height: 1.6;
+}
+
+.proposal-guide .section-body p {
+  margin: 0.75rem 0;
+  color: #171717;
+}
+
+.proposal-guide .subsection {
+  margin-top: 1.5rem;
+  border: 1px solid #d4d4d4;
+}
+
+.proposal-guide .subsection-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  background-color: #fafafa;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.proposal-guide .subsection-header:hover {
+  background-color: #f5f5f5;
+}
+
+.proposal-guide .subsection-title {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.proposal-guide .subsection-header svg {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.proposal-guide .subsection-content {
+  padding: 1rem;
+  background-color: #fff;
+}
+
+.proposal-guide .subsection-summary {
+  color: #404040;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.proposal-guide .subsection-body {
+  max-width: none;
+  line-height: 1.6;
+}
+
+.proposal-guide .subsection-body p {
+  margin: 0.5rem 0;
+  color: #171717;
+}
+
+.proposal-guide .subsection-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.proposal-guide mark {
+  background-color: #fef08a;
+  color: #000;
+  padding: 0 0.125rem;
+}
+
+@media print {
+  .proposal-guide .btn-print,
+  .proposal-guide .btn-copy,
+  .proposal-guide .no-print {
+    display: none !important;
+  }
+
+  .proposal-guide .sidebar {
+    display: none;
+  }
+
+  .proposal-guide .main-content {
+    grid-column: span 12;
+  }
+}
