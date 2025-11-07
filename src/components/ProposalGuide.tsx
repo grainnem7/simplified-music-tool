@@ -3,40 +3,25 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 import {
   Box,
   Container,
-  Drawer,
-  AppBar,
-  Toolbar,
   Typography,
   TextField,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
   Button,
-  Collapse,
   Divider,
-  Breadcrumbs,
   Link,
-  Paper,
   InputAdornment,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
+  Stack,
   CssBaseline,
   ThemeProvider,
   createTheme,
-  alpha,
+  Fade,
+  IconButton,
 } from "@mui/material";
 import {
   Home,
   Print,
   Search,
-  ExpandMore,
-  ChevronRight,
   Link as LinkIcon,
-  Description,
-  CheckCircle,
+  Check,
 } from "@mui/icons-material";
 
 export type GuideBlock = {
@@ -53,60 +38,49 @@ export type GuideContent = {
   sections: GuideBlock[];
 };
 
-const DRAWER_WIDTH = 340;
-
-// Custom professional theme
+// Minimalist, clean theme
 const theme = createTheme({
   palette: {
+    mode: "light",
     primary: {
-      main: "#1976d2",
-      light: "#42a5f5",
-      dark: "#1565c0",
-    },
-    secondary: {
-      main: "#f50057",
+      main: "#0066cc",
     },
     background: {
-      default: "#fafafa",
-      paper: "#ffffff",
+      default: "#ffffff",
+      paper: "#fafafa",
+    },
+    text: {
+      primary: "#1a1a1a",
+      secondary: "#666666",
     },
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-    h4: {
-      fontWeight: 600,
-      fontSize: "2rem",
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    h3: {
+      fontSize: "2.5rem",
+      fontWeight: 300,
       letterSpacing: "-0.02em",
+      lineHeight: 1.2,
     },
-    h6: {
-      fontWeight: 600,
-      fontSize: "1.125rem",
+    h4: {
+      fontSize: "2rem",
+      fontWeight: 400,
+      letterSpacing: "-0.01em",
+      lineHeight: 1.3,
+    },
+    h5: {
+      fontSize: "1.5rem",
+      fontWeight: 400,
+      lineHeight: 1.4,
     },
     body1: {
-      fontSize: "1rem",
-      lineHeight: 1.7,
+      fontSize: "1.125rem",
+      lineHeight: 1.8,
+      color: "#333333",
     },
   },
   shape: {
     borderRadius: 0,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          fontWeight: 500,
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
   },
 });
 
@@ -135,10 +109,10 @@ function highlight(text: string, q: string) {
         component="mark"
         key={i}
         sx={{
-          backgroundColor: "primary.light",
-          color: "white",
+          backgroundColor: "#ffeb3b",
+          color: "#000",
           px: 0.5,
-          fontWeight: 600,
+          fontWeight: 500,
         }}
       >
         {part}
@@ -157,32 +131,8 @@ export default function ProposalGuide({
   projectTitle: string;
 }) {
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const hash = useHash();
   const all = useMemo(() => flatten(content.sections), [content]);
-
-  useEffect(() => {
-    if (!hash) return;
-    const parents = new Set<string>();
-    function findParents(blocks: GuideBlock[], trail: string[] = []) {
-      for (const b of blocks) {
-        if (b.id === hash) {
-          trail.forEach((t) => parents.add(t));
-          return true;
-        }
-        if (b.children && findParents(b.children, [...trail, b.id]))
-          return true;
-      }
-      return false;
-    }
-    findParents(content.sections);
-    if (parents.size) {
-      setExpanded((e) => ({
-        ...e,
-        ...Array.from(parents).reduce((acc, k) => ({ ...acc, [k]: true }), {}),
-      }));
-    }
-  }, [hash, content.sections]);
 
   useEffect(() => {
     if (!hash) return;
@@ -201,7 +151,7 @@ export default function ProposalGuide({
       .map((b) => ({
         id: b.id,
         title: b.title,
-        snippet: (b.body || b.summary || "").slice(0, 150),
+        snippet: (b.body || b.summary || "").slice(0, 120),
         score:
           (
             (b.title + " " + (b.body || "") + " " + (b.summary || ""))
@@ -211,20 +161,15 @@ export default function ProposalGuide({
       }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 15)
+      .slice(0, 10)
       .map(({ id, title, snippet }) => ({ id, title, snippet }));
   }, [query, all]);
-
-  function toggle(id: string) {
-    setExpanded((e) => ({ ...e, [id]: !e[id] }));
-  }
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
-          display: "flex",
           minHeight: "100vh",
           bgcolor: "background.default",
           position: "fixed",
@@ -232,255 +177,189 @@ export default function ProposalGuide({
           left: 0,
           right: 0,
           bottom: 0,
+          overflow: "auto",
         }}
       >
-        {/* AppBar */}
-        <AppBar
-          position="fixed"
-          elevation={0}
+        {/* Clean Header */}
+        <Box
           sx={{
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-            bgcolor: "white",
-            color: "text.primary",
-            borderBottom: 1,
-            borderColor: "divider",
+            bgcolor: "background.default",
+            borderBottom: "1px solid #e0e0e0",
+            position: "sticky",
+            top: 0,
+            zIndex: 1000,
+            backdropFilter: "blur(10px)",
           }}
         >
-          <Toolbar sx={{ gap: 2 }}>
-            <Breadcrumbs sx={{ flexGrow: 1 }}>
+          <Container maxWidth="md">
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ py: 3 }}
+            >
               <Link
                 component={RouterLink}
                 to="/"
-                underline="hover"
-                color="inherit"
+                underline="none"
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 0.5,
-                  fontWeight: 500,
+                  gap: 1,
+                  color: "text.secondary",
                   "&:hover": { color: "primary.main" },
+                  transition: "color 0.2s",
                 }}
               >
                 <Home fontSize="small" />
-                Home
+                <Typography variant="body2" fontWeight={500}>
+                  Home
+                </Typography>
               </Link>
-              <Typography color="text.primary" fontWeight={600}>
-                Proposal
-              </Typography>
-            </Breadcrumbs>
-            <Button
-              startIcon={<Print />}
-              onClick={() => window.print()}
-              variant="outlined"
-              size="medium"
-              sx={{ minWidth: 140 }}
-            >
-              Print / Export
-            </Button>
-          </Toolbar>
-        </AppBar>
+              <IconButton
+                onClick={() => window.print()}
+                size="small"
+                sx={{ color: "text.secondary" }}
+              >
+                <Print fontSize="small" />
+              </IconButton>
+            </Stack>
+          </Container>
+        </Box>
 
-        {/* Drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: DRAWER_WIDTH,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-              borderRight: 1,
-              borderColor: "divider",
-              bgcolor: "background.paper",
-            },
-          }}
-        >
-          <Toolbar />
-          <Box sx={{ overflow: "auto", height: "100%" }}>
-            <Box sx={{ p: 3, pb: 2 }}>
+        {/* Main Content */}
+        <Container maxWidth="md" sx={{ py: 8 }}>
+          <Stack spacing={8}>
+            {/* Hero Section */}
+            <Box>
               <Typography
-                variant="h6"
+                variant="h3"
                 gutterBottom
-                sx={{ fontWeight: 700, mb: 1, color: "primary.main" }}
+                sx={{ color: "text.primary", mb: 3 }}
               >
                 {projectTitle}
               </Typography>
               {content.preface && (
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   color="text.secondary"
-                  sx={{ lineHeight: 1.6 }}
+                  sx={{ mb: 4, maxWidth: "800px" }}
                 >
                   {content.preface}
                 </Typography>
               )}
-            </Box>
 
-            <Divider />
-
-            <Box sx={{ p: 2 }}>
+              {/* Search */}
               <TextField
                 fullWidth
-                size="small"
-                placeholder="Search the guide..."
+                placeholder="Search..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search fontSize="small" color="action" />
+                      <Search sx={{ color: "text.disabled" }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
+                  maxWidth: 600,
                   "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.default",
+                    bgcolor: "background.paper",
+                    "&:hover": {
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "primary.main",
+                      },
+                    },
                   },
                 }}
               />
+
+              {/* Search Results */}
+              {query && results.length > 0 && (
+                <Fade in>
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mb: 2, display: "block" }}
+                    >
+                      {results.length} result{results.length !== 1 ? "s" : ""}
+                    </Typography>
+                    <Stack spacing={2}>
+                      {results.map((r) => (
+                        <Link
+                          key={r.id}
+                          href={`#${r.id}`}
+                          underline="none"
+                          sx={{
+                            display: "block",
+                            p: 2,
+                            bgcolor: "background.paper",
+                            "&:hover": { bgcolor: "#f5f5f5" },
+                            transition: "background-color 0.2s",
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight={500} gutterBottom>
+                            {highlight(r.title, query)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {highlight(r.snippet || "", query)}
+                          </Typography>
+                        </Link>
+                      ))}
+                    </Stack>
+                  </Box>
+                </Fade>
+              )}
             </Box>
 
-            {query && results.length > 0 && (
-              <Paper
-                elevation={0}
-                sx={{
-                  mx: 2,
-                  mb: 2,
-                  bgcolor: alpha(theme.palette.primary.main, 0.05),
-                  border: 1,
-                  borderColor: "divider",
-                }}
-              >
-                <Box sx={{ p: 1.5, pb: 1 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      textTransform: "uppercase",
-                      fontWeight: 700,
-                      color: "primary.main",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    {results.length} Match{results.length !== 1 ? "es" : ""}
-                  </Typography>
-                </Box>
-                <List dense disablePadding>
-                  {results.map((r) => (
-                    <ListItem key={r.id} disablePadding>
-                      <ListItemButton component="a" href={`#${r.id}`}>
-                        <ListItemText
-                          primary={highlight(r.title, query)}
-                          secondary={highlight(r.snippet || "", query)}
-                          primaryTypographyProps={{
-                            variant: "body2",
-                            fontWeight: 500,
-                          }}
-                          secondaryTypographyProps={{ variant: "caption" }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
-            )}
+            <Divider />
 
-            <List disablePadding>
-              {content.sections.map((sec, idx) => (
-                <Box key={sec.id}>
-                  <ListItemButton
-                    onClick={() => toggle(sec.id)}
+            {/* Table of Contents */}
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+                Contents
+              </Typography>
+              <Stack spacing={1}>
+                {content.sections.map((sec, idx) => (
+                  <Link
+                    key={sec.id}
+                    href={`#${sec.id}`}
+                    underline="none"
                     sx={{
-                      py: 1.5,
-                      px: 2,
-                      "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.05) },
+                      display: "flex",
+                      gap: 2,
+                      py: 1,
+                      color: "text.primary",
+                      "&:hover": { color: "primary.main" },
+                      transition: "color 0.2s",
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
-                        gap: 1.5,
-                      }}
+                    <Typography
+                      variant="body2"
+                      color="text.disabled"
+                      sx={{ minWidth: 30 }}
                     >
-                      <Chip
-                        label={idx + 1}
-                        size="small"
-                        sx={{
-                          bgcolor: "primary.main",
-                          color: "white",
-                          fontWeight: 600,
-                          minWidth: 32,
-                        }}
-                      />
-                      <ListItemText
-                        primary={sec.title}
-                        primaryTypographyProps={{
-                          fontWeight: 600,
-                          fontSize: "0.95rem",
-                        }}
-                      />
-                      {expanded[sec.id] ? (
-                        <ExpandMore sx={{ color: "primary.main" }} />
-                      ) : (
-                        <ChevronRight sx={{ color: "text.secondary" }} />
-                      )}
-                    </Box>
-                  </ListItemButton>
-                  <Collapse in={expanded[sec.id]} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding dense>
-                      <ListItemButton
-                        component="a"
-                        href={`#${sec.id}`}
-                        sx={{ pl: 7, py: 1 }}
-                      >
-                        <Description fontSize="small" sx={{ mr: 1.5, color: "primary.main" }} />
-                        <ListItemText
-                          primary="Overview"
-                          primaryTypographyProps={{ variant: "body2" }}
-                        />
-                      </ListItemButton>
-                      {(sec.children ?? []).map((sub) => (
-                        <ListItemButton
-                          key={sub.id}
-                          component="a"
-                          href={`#${sub.id}`}
-                          sx={{ pl: 7, py: 1 }}
-                        >
-                          <CheckCircle fontSize="small" sx={{ mr: 1.5, color: "action.active" }} />
-                          <ListItemText
-                            primary={sub.title}
-                            primaryTypographyProps={{ variant: "body2" }}
-                          />
-                        </ListItemButton>
-                      ))}
-                    </List>
-                  </Collapse>
-                  <Divider />
-                </Box>
-              ))}
-            </List>
-          </Box>
-        </Drawer>
+                      {String(idx + 1).padStart(2, "0")}
+                    </Typography>
+                    <Typography variant="body1">{sec.title}</Typography>
+                  </Link>
+                ))}
+              </Stack>
+            </Box>
 
-        {/* Main Content */}
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 4,
-            width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-            overflow: "auto",
-            bgcolor: "background.default",
-          }}
-        >
-          <Toolbar />
-          <Container maxWidth="lg" sx={{ mt: 2 }}>
+            <Divider sx={{ my: 6 }} />
+
+            {/* Sections */}
             {content.sections.map((sec) => (
               <Section key={sec.id} block={sec} query={query} />
             ))}
-          </Container>
-        </Box>
+          </Stack>
+        </Container>
+
+        {/* Footer spacing */}
+        <Box sx={{ height: 100 }} />
       </Box>
     </ThemeProvider>
   );
@@ -495,73 +374,59 @@ function Section({ block, query }: { block: GuideBlock; query: string }) {
     )}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
-    <Paper
-      id={block.id}
-      elevation={0}
-      sx={{
-        mb: 4,
-        p: 4,
-        border: 1,
-        borderColor: "divider",
-        bgcolor: "background.paper",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          mb: 3,
-          pb: 2,
-          borderBottom: 2,
-          borderColor: "primary.main",
-        }}
-      >
-        <Typography variant="h4" component="h2" sx={{ color: "primary.dark" }}>
-          {highlight(block.title, query)}
-        </Typography>
-        <Button
-          size="small"
-          startIcon={copied ? <CheckCircle /> : <LinkIcon />}
-          onClick={copy}
-          variant={copied ? "contained" : "outlined"}
-          sx={{ minWidth: 120 }}
-        >
-          {copied ? "Copied!" : "Copy link"}
-        </Button>
-      </Box>
+    <Box id={block.id} component="section" sx={{ scrollMarginTop: 100 }}>
+      <Stack spacing={4}>
+        <Box>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+            <Typography variant="h4" sx={{ flexGrow: 1 }}>
+              {highlight(block.title, query)}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={copy}
+              sx={{
+                color: copied ? "success.main" : "text.disabled",
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              {copied ? <Check fontSize="small" /> : <LinkIcon fontSize="small" />}
+            </IconButton>
+          </Stack>
 
-      {block.summary && (
-        <Typography
-          variant="body1"
-          sx={{
-            mb: 3,
-            p: 2,
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
-            borderLeft: 3,
-            borderColor: "primary.main",
-            fontStyle: "italic",
-          }}
-        >
-          {highlight(block.summary, query)}
-        </Typography>
-      )}
+          {block.summary && (
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                mb: 3,
+                pl: 3,
+                borderLeft: "3px solid",
+                borderColor: "primary.main",
+                fontStyle: "italic",
+              }}
+            >
+              {highlight(block.summary, query)}
+            </Typography>
+          )}
 
-      {block.body && (
-        <Typography variant="body1" sx={{ mb: 3, color: "text.primary" }}>
-          {highlight(block.body, query)}
-        </Typography>
-      )}
+          {block.body && (
+            <Typography variant="body1" sx={{ color: "text.primary" }}>
+              {highlight(block.body, query)}
+            </Typography>
+          )}
+        </Box>
 
-      {(block.children ?? []).map((sub) => (
-        <SubSection key={sub.id} block={sub} query={query} />
-      ))}
-    </Paper>
+        {/* Subsections */}
+        {(block.children ?? []).map((sub) => (
+          <SubSection key={sub.id} block={sub} query={query} />
+        ))}
+      </Stack>
+    </Box>
   );
 }
 
@@ -574,67 +439,54 @@ function SubSection({ block, query }: { block: GuideBlock; query: string }) {
     )}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
-    <Accordion
-      defaultExpanded
+    <Box
       id={block.id}
-      elevation={0}
       sx={{
-        mb: 2,
-        border: 1,
-        borderColor: "divider",
-        "&:before": { display: "none" },
-        "&.Mui-expanded": { margin: 0, mb: 2 },
+        pl: 4,
+        py: 3,
+        bgcolor: "background.paper",
+        scrollMarginTop: 100,
       }}
     >
-      <AccordionSummary
-        expandIcon={<ExpandMore />}
-        sx={{
-          bgcolor: alpha(theme.palette.primary.main, 0.03),
-          "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.08) },
-        }}
-      >
-        <Typography variant="h6" sx={{ color: "primary.dark" }}>
-          {highlight(block.title, query)}
-        </Typography>
-      </AccordionSummary>
-      <AccordionDetails sx={{ p: 3 }}>
-        {block.summary && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 2, fontStyle: "italic" }}
+      <Stack spacing={2}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Typography variant="h5" sx={{ flexGrow: 1 }}>
+            {highlight(block.title, query)}
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={copy}
+            sx={{
+              color: copied ? "success.main" : "text.disabled",
+              "&:hover": { color: "primary.main" },
+            }}
           >
+            {copied ? <Check fontSize="small" /> : <LinkIcon fontSize="small" />}
+          </IconButton>
+        </Stack>
+
+        {block.summary && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
             {highlight(block.summary, query)}
           </Typography>
         )}
 
         {block.body && (
-          <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.8 }}>
-            {highlight(block.body, query)}
-          </Typography>
+          <Typography variant="body1">{highlight(block.body, query)}</Typography>
         )}
-
-        <Button
-          size="small"
-          startIcon={copied ? <CheckCircle /> : <LinkIcon />}
-          onClick={copy}
-          variant={copied ? "contained" : "text"}
-        >
-          {copied ? "Copied!" : "Copy link"}
-        </Button>
-      </AccordionDetails>
-    </Accordion>
+      </Stack>
+    </Box>
   );
 }
 
 export const CONTENT = {
   preface:
-    "An interactive, thorough walkthrough of the proposal: scope, methods, timeline, ethics, risks, and deliverables. Click any section for details or share deep links with the committee.",
+    "An interactive walkthrough of the proposal: scope, methods, timeline, ethics, risks, and deliverables.",
   sections: [
     {
       id: "executive-summary",
