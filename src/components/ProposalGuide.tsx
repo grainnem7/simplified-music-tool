@@ -41,53 +41,75 @@ export type GuideContent = {
   sections: GuideBlock[];
 };
 
-// Clean, accessible theme with better contrast
+// Modern, clean theme with vibrant accents
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#1976d2",
-      light: "#42a5f5",
-      dark: "#1565c0",
+      main: "#6366f1", // Indigo
+      light: "#818cf8",
+      dark: "#4f46e5",
     },
     secondary: {
-      main: "#f5f5f5",
+      main: "#10b981", // Emerald
+      light: "#34d399",
+      dark: "#059669",
     },
     background: {
-      default: "#ffffff",
-      paper: "#fafafa",
+      default: "#f8fafc",
+      paper: "#ffffff",
     },
     text: {
-      primary: "#212121",
-      secondary: "#616161",
+      primary: "#0f172a",
+      secondary: "#64748b",
     },
+    divider: "#e2e8f0",
   },
   typography: {
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    fontFamily:
+      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     h2: {
-      fontSize: "2.25rem",
-      fontWeight: 700,
-      marginBottom: "1.5rem",
-      letterSpacing: "-0.02em",
+      fontSize: "2.5rem",
+      fontWeight: 800,
+      marginBottom: "1rem",
+      letterSpacing: "-0.03em",
+      lineHeight: 1.2,
     },
     h3: {
-      fontSize: "1.5rem",
-      fontWeight: 600,
-      marginBottom: "1rem",
-      letterSpacing: "-0.01em",
+      fontSize: "1.75rem",
+      fontWeight: 700,
+      marginBottom: "0.75rem",
+      letterSpacing: "-0.02em",
+      lineHeight: 1.3,
     },
     h4: {
-      fontSize: "1.125rem",
+      fontSize: "1.25rem",
       fontWeight: 600,
-      marginBottom: "0.75rem",
+      marginBottom: "0.5rem",
+      lineHeight: 1.4,
     },
     body1: {
-      fontSize: "1rem",
-      lineHeight: 1.8,
-      color: "#424242",
+      fontSize: "1.0625rem",
+      lineHeight: 1.75,
+      color: "#475569",
+    },
+    subtitle1: {
+      fontSize: "1.125rem",
+      lineHeight: 1.6,
+      color: "#64748b",
     },
   },
   shape: {
     borderRadius: 0,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          fontWeight: 600,
+        },
+      },
+    },
   },
 });
 
@@ -117,19 +139,48 @@ function BodyTrackingDemo() {
     <Box
       sx={{
         my: 4,
-        p: 3,
-        bgcolor: "background.paper",
-        border: "2px solid",
-        borderColor: "primary.main",
+        p: 4,
+        background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+        border: "3px solid #38bdf8",
+        borderRadius: "8px",
+        boxShadow: "0 4px 16px rgba(56, 189, 248, 0.15)",
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <Code sx={{ color: "primary.main" }} />
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Interactive Demo: Body Part Selection
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
+        <Box
+          sx={{
+            bgcolor: "#38bdf8",
+            color: "white",
+            p: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Code />
+        </Box>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: "#0c4a6e",
+            fontSize: "1.125rem",
+          }}
+        >
+          🎮 Interactive Demo: Body Part Selection
         </Typography>
       </Stack>
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert
+        severity="info"
+        sx={{
+          mb: 3,
+          bgcolor: "rgba(56, 189, 248, 0.1)",
+          border: "1px solid #7dd3fc",
+          "& .MuiAlert-icon": {
+            color: "#0284c7",
+          },
+        }}
+      >
         This is a live demo of the body tracking interface. Try selecting
         different body parts to see how the system allows users to customize
         which movements are tracked.
@@ -183,19 +234,48 @@ function SystemDiagramDemo() {
     <Box
       sx={{
         my: 4,
-        p: 3,
-        bgcolor: "background.paper",
-        border: "2px solid",
-        borderColor: "primary.main",
+        p: 4,
+        background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)",
+        border: "3px solid #a78bfa",
+        borderRadius: "8px",
+        boxShadow: "0 4px 16px rgba(167, 139, 250, 0.15)",
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <Code sx={{ color: "primary.main" }} />
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          System Architecture Diagram
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
+        <Box
+          sx={{
+            bgcolor: "#a78bfa",
+            color: "white",
+            p: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Code />
+        </Box>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: "#581c87",
+            fontSize: "1.125rem",
+          }}
+        >
+          🔄 System Architecture Diagram
         </Typography>
       </Stack>
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert
+        severity="info"
+        sx={{
+          mb: 3,
+          bgcolor: "rgba(167, 139, 250, 0.1)",
+          border: "1px solid #c4b5fd",
+          "& .MuiAlert-icon": {
+            color: "#7c3aed",
+          },
+        }}
+      >
         This diagram shows the data flow from webcam input through pose
         detection to musical output.
       </Alert>
@@ -325,13 +405,14 @@ export default function ProposalGuide({
         {/* Header */}
         <Box
           sx={{
-            bgcolor: "primary.main",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
-            py: 2.5,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            py: 3,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             position: "sticky",
             top: 0,
             zIndex: 1000,
+            borderBottom: "3px solid rgba(255,255,255,0.2)",
           }}
         >
           <Box sx={{ maxWidth: 1200, mx: "auto", px: 3 }}>
@@ -340,47 +421,56 @@ export default function ProposalGuide({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
                 <Button
                   component={RouterLink}
                   to="/"
                   startIcon={<Home />}
                   sx={{
                     color: "white",
-                    textTransform: "none",
-                    fontSize: "1rem",
+                    fontSize: "0.95rem",
                     fontWeight: 600,
+                    px: 2,
+                    py: 1,
+                    border: "1.5px solid rgba(255,255,255,0.3)",
                     "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.1)",
+                      bgcolor: "rgba(255,255,255,0.15)",
+                      borderColor: "rgba(255,255,255,0.5)",
                     },
                   }}
                 >
-                  Back to Home
+                  Home
                 </Button>
                 <Button
                   component={RouterLink}
                   to="/"
-                  variant="contained"
                   sx={{
-                    bgcolor: "rgba(255,255,255,0.2)",
-                    color: "white",
-                    textTransform: "none",
-                    fontSize: "1rem",
-                    fontWeight: 600,
+                    bgcolor: "white",
+                    color: "#667eea",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    px: 3,
+                    py: 1,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                     "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.3)",
+                      bgcolor: "#f8fafc",
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
                     },
+                    transition: "all 0.2s",
                   }}
                 >
-                  Try It Live
+                  Try It Live →
                 </Button>
               </Stack>
               <IconButton
                 onClick={() => window.print()}
                 sx={{
                   color: "white",
+                  border: "1.5px solid rgba(255,255,255,0.3)",
                   "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.1)",
+                    bgcolor: "rgba(255,255,255,0.15)",
+                    borderColor: "rgba(255,255,255,0.5)",
                   },
                 }}
                 aria-label="Print documentation"
@@ -392,32 +482,42 @@ export default function ProposalGuide({
         </Box>
 
         {/* Main Content */}
-        <Box sx={{ maxWidth: 900, mx: "auto", px: 3, py: 5 }}>
+        <Box sx={{ maxWidth: 1000, mx: "auto", px: 3, py: 6 }}>
           {/* Title & Search */}
-          <Box sx={{ mb: 5 }}>
-            <Typography
-              variant="h2"
-              gutterBottom
+          <Box sx={{ mb: 6 }}>
+            <Box
               sx={{
-                color: "text.primary",
-                mb: 2,
+                mb: 4,
+                pb: 4,
+                borderBottom: "2px solid",
+                borderColor: "divider",
               }}
             >
-              {projectTitle}
-            </Typography>
-            {content.preface && (
               <Typography
-                variant="body1"
+                variant="h2"
                 sx={{
-                  mb: 4,
-                  fontSize: "1.125rem",
-                  color: "text.secondary",
-                  maxWidth: "800px",
+                  color: "text.primary",
+                  mb: 2,
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
                 }}
               >
-                {content.preface}
+                {projectTitle}
               </Typography>
-            )}
+              {content.preface && (
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    color: "text.secondary",
+                    maxWidth: "750px",
+                  }}
+                >
+                  {content.preface}
+                </Typography>
+              )}
+            </Box>
 
             <TextField
               fullWidth
@@ -427,16 +527,29 @@ export default function ProposalGuide({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search sx={{ color: "text.secondary" }} />
+                    <Search sx={{ color: "#94a3b8" }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
-                maxWidth: 600,
+                maxWidth: 650,
                 "& .MuiOutlinedInput-root": {
                   bgcolor: "white",
+                  fontSize: "1rem",
+                  borderRadius: "8px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                  border: "2px solid transparent",
+                  "& fieldset": {
+                    border: "2px solid #e2e8f0",
+                  },
                   "&:hover fieldset": {
-                    borderColor: "primary.main",
+                    borderColor: "#94a3b8",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#6366f1",
+                  },
+                  "&.Mui-focused": {
+                    boxShadow: "0 0 0 3px rgba(99, 102, 241, 0.1)",
                   },
                 },
               }}
@@ -473,65 +586,103 @@ export default function ProposalGuide({
           {/* Table of Contents */}
           <Card
             sx={{
-              mb: 5,
-              bgcolor: "background.paper",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+              mb: 6,
+              bgcolor: "white",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid",
+              borderColor: "divider",
+              overflow: "hidden",
             }}
           >
-            <CardContent sx={{ p: 4 }}>
+            <Box
+              sx={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                px: 4,
+                py: 3,
+              }}
+            >
               <Typography
                 variant="h3"
-                gutterBottom
                 sx={{
-                  color: "text.primary",
-                  mb: 3,
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: "1.5rem",
                 }}
               >
-                Contents
+                📑 Table of Contents
               </Typography>
-              <Stack spacing={1.5}>
+            </Box>
+            <CardContent sx={{ p: 0 }}>
+              <Stack spacing={0}>
                 {content.sections.map((sec, idx) => (
                   <Button
                     key={sec.id}
                     href={`#${sec.id}`}
-                    variant="outlined"
-                    size="large"
-                    fullWidth
-                    startIcon={
-                      <Box
-                        sx={{
-                          bgcolor: "primary.main",
-                          color: "white",
-                          width: 32,
-                          height: 32,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "0.875rem",
-                          fontWeight: 700,
-                          mr: 1,
-                        }}
-                      >
-                        {idx + 1}
-                      </Box>
-                    }
                     sx={{
                       justifyContent: "flex-start",
-                      textTransform: "none",
-                      fontSize: "1rem",
-                      py: 2,
-                      px: 2,
+                      fontSize: "1.0625rem",
+                      py: 2.5,
+                      px: 4,
                       textAlign: "left",
                       fontWeight: 500,
-                      borderColor: "divider",
                       color: "text.primary",
-                      "&:hover": {
-                        borderColor: "primary.main",
-                        bgcolor: "rgba(25, 118, 210, 0.04)",
+                      borderBottom: "1px solid #e2e8f0",
+                      borderRadius: 0,
+                      "&:last-child": {
+                        borderBottom: "none",
                       },
+                      "&:hover": {
+                        bgcolor: "#f8fafc",
+                        "& .toc-number": {
+                          bgcolor: "#6366f1",
+                          transform: "scale(1.1)",
+                        },
+                      },
+                      transition: "all 0.2s",
                     }}
                   >
-                    {sec.title}
+                    <Box
+                      className="toc-number"
+                      sx={{
+                        bgcolor: "#e0e7ff",
+                        color: "#4f46e5",
+                        width: 36,
+                        height: 36,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.875rem",
+                        fontWeight: 700,
+                        mr: 2.5,
+                        flexShrink: 0,
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      {idx + 1}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: "1.0625rem",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {sec.title}
+                      </Typography>
+                    </Box>
+                    <KeyboardArrowRight
+                      sx={{
+                        ml: 2,
+                        color: "#94a3b8",
+                        opacity: 0,
+                        transition: "all 0.2s",
+                        ".MuiButton-root:hover &": {
+                          opacity: 1,
+                          transform: "translateX(4px)",
+                        },
+                      }}
+                    />
                   </Button>
                 ))}
               </Stack>
@@ -539,73 +690,92 @@ export default function ProposalGuide({
           </Card>
 
           {/* Sections */}
-          <Stack spacing={5}>
+          <Stack spacing={6}>
             {content.sections.map((sec, idx) => (
               <Card
                 key={sec.id}
                 id={sec.id}
                 sx={{
                   bgcolor: "white",
-                  scrollMarginTop: 80,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                  scrollMarginTop: 100,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
                   border: "1px solid",
                   borderColor: "divider",
+                  overflow: "hidden",
+                  transition: "all 0.3s",
+                  "&:hover": {
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+                    transform: "translateY(-2px)",
+                  },
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
+                {/* Section Header Bar */}
+                <Box
+                  sx={{
+                    background: `linear-gradient(135deg, ${
+                      ["#667eea", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"][idx % 7]
+                    } 0%, ${
+                      ["#764ba2", "#059669", "#d97706", "#dc2626", "#7c3aed", "#db2777", "#0d9488"][idx % 7]
+                    } 100%)`,
+                    px: 4,
+                    py: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
                   <Box
                     sx={{
+                      bgcolor: "rgba(255,255,255,0.25)",
+                      color: "white",
+                      minWidth: 48,
+                      height: 48,
                       display: "flex",
-                      alignItems: "flex-start",
-                      gap: 2,
-                      mb: 3,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "1.5rem",
+                      fontWeight: 800,
+                      flexShrink: 0,
+                      backdropFilter: "blur(10px)",
                     }}
                   >
-                    <Box
-                      sx={{
-                        bgcolor: "primary.main",
-                        color: "white",
-                        minWidth: 56,
-                        height: 56,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "1.75rem",
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {idx + 1}
-                    </Box>
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        color: "text.primary",
-                        pt: 0.5,
-                      }}
-                    >
-                      {sec.title}
-                    </Typography>
+                    {idx + 1}
                   </Box>
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      color: "white",
+                      fontSize: "1.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {sec.title}
+                  </Typography>
+                </Box>
 
+                <CardContent sx={{ p: 4 }}>
                   {sec.summary && (
                     <Box
                       sx={{
                         mb: 3,
-                        p: 2.5,
-                        bgcolor: "rgba(25, 118, 210, 0.04)",
+                        p: 3,
+                        bgcolor: "#f8fafc",
                         borderLeft: "4px solid",
-                        borderColor: "primary.main",
+                        borderColor: `${
+                          ["#667eea", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"][idx % 7]
+                        }`,
+                        borderRadius: "0 4px 4px 0",
                       }}
                     >
                       <Typography
                         variant="body1"
                         sx={{
-                          fontWeight: 500,
+                          fontWeight: 600,
                           color: "text.primary",
+                          fontSize: "1.0625rem",
                         }}
                       >
-                        {sec.summary}
+                        💡 {sec.summary}
                       </Typography>
                     </Box>
                   )}
@@ -626,36 +796,68 @@ export default function ProposalGuide({
                   {sec.demo && <DemoRenderer type={sec.demo} />}
 
                   {/* Subsections */}
-                  {(sec.children ?? []).map((sub) => (
+                  {(sec.children ?? []).map((sub, subIdx) => (
                     <Card
                       key={sub.id}
                       id={sub.id}
-                      variant="outlined"
                       sx={{
                         mt: 3,
-                        scrollMarginTop: 80,
-                        borderColor: "divider",
-                        bgcolor: "background.paper",
+                        scrollMarginTop: 100,
+                        border: "2px solid #e2e8f0",
+                        bgcolor: "#fafbfc",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                        transition: "all 0.2s",
+                        "&:hover": {
+                          borderColor: "#cbd5e1",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                        },
                       }}
                     >
-                      <CardContent sx={{ p: 3 }}>
-                        <Typography
-                          variant="h4"
-                          gutterBottom
+                      <CardContent sx={{ p: 3.5 }}>
+                        <Box
                           sx={{
-                            color: "primary.main",
-                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            mb: 2,
                           }}
                         >
-                          {sub.title}
-                        </Typography>
+                          <Box
+                            sx={{
+                              bgcolor: "#e0e7ff",
+                              color: "#4f46e5",
+                              width: 28,
+                              height: 28,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {idx + 1}.{subIdx + 1}
+                          </Box>
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              color: "#4f46e5",
+                              fontWeight: 700,
+                              fontSize: "1.25rem",
+                            }}
+                          >
+                            {sub.title}
+                          </Typography>
+                        </Box>
                         {sub.summary && (
                           <Typography
                             variant="body1"
                             sx={{
                               mb: 2,
                               fontStyle: "italic",
-                              color: "text.secondary",
+                              color: "#64748b",
+                              fontSize: "1rem",
+                              pl: 5,
                             }}
                           >
                             {sub.summary}
@@ -664,32 +866,57 @@ export default function ProposalGuide({
                         {sub.body && (
                           <Typography
                             variant="body1"
-                            sx={{ color: "text.secondary" }}
+                            sx={{
+                              color: "#475569",
+                              fontSize: "1.0625rem",
+                              lineHeight: 1.75,
+                              pl: 5,
+                            }}
                           >
                             {sub.body}
                           </Typography>
                         )}
                         {/* Interactive Demo in subsection */}
-                        {sub.demo && <DemoRenderer type={sub.demo} />}
+                        {sub.demo && (
+                          <Box sx={{ pl: 5 }}>
+                            <DemoRenderer type={sub.demo} />
+                          </Box>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
 
-                  <Button
-                    href="#"
-                    variant="text"
+                  <Box
                     sx={{
                       mt: 4,
-                      textTransform: "none",
-                      color: "primary.main",
-                      fontWeight: 500,
-                      "&:hover": {
-                        bgcolor: "rgba(25, 118, 210, 0.04)",
-                      },
+                      pt: 3,
+                      borderTop: "1px solid #e2e8f0",
+                      display: "flex",
+                      justifyContent: "center",
                     }}
                   >
-                    ↑ Back to top
-                  </Button>
+                    <Button
+                      href="#"
+                      variant="outlined"
+                      sx={{
+                        color: "#6366f1",
+                        borderColor: "#e0e7ff",
+                        bgcolor: "#f8fafc",
+                        px: 3,
+                        py: 1,
+                        fontWeight: 600,
+                        fontSize: "0.9375rem",
+                        "&:hover": {
+                          bgcolor: "#e0e7ff",
+                          borderColor: "#6366f1",
+                          transform: "translateY(-2px)",
+                        },
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      ↑ Back to Top
+                    </Button>
+                  </Box>
                 </CardContent>
               </Card>
             ))}
