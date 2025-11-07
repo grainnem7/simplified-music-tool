@@ -2,26 +2,23 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import {
   Box,
-  Container,
   Typography,
   TextField,
   Button,
-  Divider,
-  Link,
-  InputAdornment,
   Stack,
   CssBaseline,
   ThemeProvider,
   createTheme,
-  Fade,
   IconButton,
+  InputAdornment,
+  Card,
+  CardContent,
 } from "@mui/material";
 import {
   Home,
   Print,
   Search,
-  Link as LinkIcon,
-  Check,
+  KeyboardArrowRight,
 } from "@mui/icons-material";
 
 export type GuideBlock = {
@@ -38,45 +35,49 @@ export type GuideContent = {
   sections: GuideBlock[];
 };
 
-// Minimalist, clean theme
+// Clean, accessible theme with better contrast
 const theme = createTheme({
   palette: {
-    mode: "light",
     primary: {
-      main: "#0066cc",
+      main: "#1976d2",
+      light: "#42a5f5",
+      dark: "#1565c0",
+    },
+    secondary: {
+      main: "#f5f5f5",
     },
     background: {
       default: "#ffffff",
       paper: "#fafafa",
     },
     text: {
-      primary: "#1a1a1a",
-      secondary: "#666666",
+      primary: "#212121",
+      secondary: "#616161",
     },
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    h3: {
-      fontSize: "2.5rem",
-      fontWeight: 300,
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    h2: {
+      fontSize: "2.25rem",
+      fontWeight: 700,
+      marginBottom: "1.5rem",
       letterSpacing: "-0.02em",
-      lineHeight: 1.2,
+    },
+    h3: {
+      fontSize: "1.5rem",
+      fontWeight: 600,
+      marginBottom: "1rem",
+      letterSpacing: "-0.01em",
     },
     h4: {
-      fontSize: "2rem",
-      fontWeight: 400,
-      letterSpacing: "-0.01em",
-      lineHeight: 1.3,
-    },
-    h5: {
-      fontSize: "1.5rem",
-      fontWeight: 400,
-      lineHeight: 1.4,
+      fontSize: "1.125rem",
+      fontWeight: 600,
+      marginBottom: "0.75rem",
     },
     body1: {
-      fontSize: "1.125rem",
+      fontSize: "1rem",
       lineHeight: 1.8,
-      color: "#333333",
+      color: "#424242",
     },
   },
   shape: {
@@ -97,30 +98,6 @@ function flatten(blocks: GuideBlock[]): GuideBlock[] {
 function useHash(): string {
   const { hash } = useLocation();
   return decodeURIComponent(hash.replace(/^#/, ""));
-}
-
-function highlight(text: string, q: string) {
-  if (!q) return text;
-  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(`(${escaped})`, "ig");
-  return text.split(re).map((part, i) =>
-    re.test(part) ? (
-      <Box
-        component="mark"
-        key={i}
-        sx={{
-          backgroundColor: "#ffeb3b",
-          color: "#000",
-          px: 0.5,
-          fontWeight: 500,
-        }}
-      >
-        {part}
-      </Box>
-    ) : (
-      <React.Fragment key={i}>{part}</React.Fragment>
-    )
-  );
 }
 
 export default function ProposalGuide({
@@ -148,21 +125,12 @@ export default function ProposalGuide({
     if (!query.trim()) return [];
     const q = query.trim().toLowerCase();
     return all
-      .map((b) => ({
-        id: b.id,
-        title: b.title,
-        snippet: (b.body || b.summary || "").slice(0, 120),
-        score:
-          (
-            (b.title + " " + (b.body || "") + " " + (b.summary || ""))
-              .toLowerCase()
-              .match(new RegExp(q, "g")) || []
-          ).length,
-      }))
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10)
-      .map(({ id, title, snippet }) => ({ id, title, snippet }));
+      .filter((b) =>
+        (b.title + " " + (b.body || "") + " " + (b.summary || ""))
+          .toLowerCase()
+          .includes(q)
+      )
+      .slice(0, 10);
   }, [query, all]);
 
   return (
@@ -180,324 +148,366 @@ export default function ProposalGuide({
           overflow: "auto",
         }}
       >
-        {/* Clean Header */}
+        {/* Header */}
         <Box
           sx={{
-            bgcolor: "background.default",
-            borderBottom: "1px solid #e0e0e0",
+            bgcolor: "primary.main",
+            color: "white",
+            py: 2.5,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
             position: "sticky",
             top: 0,
             zIndex: 1000,
-            backdropFilter: "blur(10px)",
           }}
         >
-          <Container maxWidth="md">
+          <Box sx={{ maxWidth: 1200, mx: "auto", px: 3 }}>
             <Stack
               direction="row"
-              alignItems="center"
               justifyContent="space-between"
-              sx={{ py: 3 }}
+              alignItems="center"
             >
-              <Link
+              <Button
                 component={RouterLink}
                 to="/"
-                underline="none"
+                startIcon={<Home />}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  color: "text.secondary",
-                  "&:hover": { color: "primary.main" },
-                  transition: "color 0.2s",
+                  color: "white",
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.1)",
+                  },
                 }}
               >
-                <Home fontSize="small" />
-                <Typography variant="body2" fontWeight={500}>
-                  Home
-                </Typography>
-              </Link>
+                Back to Home
+              </Button>
               <IconButton
                 onClick={() => window.print()}
-                size="small"
-                sx={{ color: "text.secondary" }}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.1)",
+                  },
+                }}
+                aria-label="Print documentation"
               >
-                <Print fontSize="small" />
+                <Print />
               </IconButton>
             </Stack>
-          </Container>
+          </Box>
         </Box>
 
-        {/* Main Content with Sidebar Layout */}
-        <Box sx={{ display: "flex", position: "relative", maxWidth: 1400, mx: "auto", px: 4 }}>
-          {/* Floating Sidebar Navigation */}
-          <Box
+        {/* Main Content */}
+        <Box sx={{ maxWidth: 900, mx: "auto", px: 3, py: 5 }}>
+          {/* Title & Search */}
+          <Box sx={{ mb: 5 }}>
+            <Typography
+              variant="h2"
+              gutterBottom
+              sx={{
+                color: "text.primary",
+                mb: 2,
+              }}
+            >
+              {projectTitle}
+            </Typography>
+            {content.preface && (
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: 4,
+                  fontSize: "1.125rem",
+                  color: "text.secondary",
+                  maxWidth: "800px",
+                }}
+              >
+                {content.preface}
+              </Typography>
+            )}
+
+            <TextField
+              fullWidth
+              placeholder="Search documentation..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                maxWidth: 600,
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "white",
+                  "&:hover fieldset": {
+                    borderColor: "primary.main",
+                  },
+                },
+              }}
+            />
+
+            {/* Search Results */}
+            {query && results.length > 0 && (
+              <Card sx={{ mt: 2, maxWidth: 600 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Found {results.length} result{results.length !== 1 ? "s" : ""}
+                  </Typography>
+                  <Stack spacing={1}>
+                    {results.map((r) => (
+                      <Button
+                        key={r.id}
+                        href={`#${r.id}`}
+                        fullWidth
+                        sx={{
+                          justifyContent: "flex-start",
+                          textAlign: "left",
+                          textTransform: "none",
+                        }}
+                      >
+                        {r.title}
+                      </Button>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
+          </Box>
+
+          {/* Table of Contents */}
+          <Card
             sx={{
-              width: 280,
-              flexShrink: 0,
-              position: "sticky",
-              top: 100,
-              height: "fit-content",
-              maxHeight: "calc(100vh - 120px)",
-              overflow: "auto",
-              display: { xs: "none", md: "block" },
-              pr: 4,
+              mb: 5,
+              bgcolor: "background.paper",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
             }}
           >
-            <Typography variant="caption" sx={{ color: "text.disabled", mb: 2, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
-              Contents
-            </Typography>
-            <Stack spacing={0.5}>
-              {content.sections.map((sec, idx) => (
-                <Link
-                  key={sec.id}
-                  href={`#${sec.id}`}
-                  underline="none"
-                  sx={{
-                    display: "block",
-                    py: 0.75,
-                    color: "text.secondary",
-                    fontSize: "0.875rem",
-                    "&:hover": { color: "primary.main" },
-                    transition: "color 0.2s",
-                    borderLeft: "2px solid transparent",
-                    pl: 2,
-                    "&:hover": {
-                      borderLeftColor: "primary.main",
-                      color: "primary.main",
-                    },
-                  }}
-                >
-                  {sec.title}
-                </Link>
-              ))}
-            </Stack>
-          </Box>
-
-          {/* Main Content Area */}
-          <Box sx={{ flexGrow: 1, maxWidth: 800, py: 8 }}>
-            <Stack spacing={8}>
-              {/* Hero Section */}
-              <Box>
-                <Typography
-                  variant="h3"
-                  gutterBottom
-                  sx={{ color: "text.primary", mb: 3 }}
-                >
-                  {projectTitle}
-                </Typography>
-                {content.preface && (
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{ mb: 4 }}
-                  >
-                    {content.preface}
-                  </Typography>
-                )}
-
-                {/* Search */}
-                <TextField
-                  fullWidth
-                  placeholder="Search..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search sx={{ color: "text.disabled" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.paper",
-                      "&:hover": {
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "primary.main",
-                        },
-                      },
-                    },
-                  }}
-                />
-
-                {/* Search Results */}
-                {query && results.length > 0 && (
-                  <Fade in>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ mb: 2, display: "block" }}
+            <CardContent sx={{ p: 4 }}>
+              <Typography
+                variant="h3"
+                gutterBottom
+                sx={{
+                  color: "text.primary",
+                  mb: 3,
+                }}
+              >
+                Contents
+              </Typography>
+              <Stack spacing={1.5}>
+                {content.sections.map((sec, idx) => (
+                  <Button
+                    key={sec.id}
+                    href={`#${sec.id}`}
+                    variant="outlined"
+                    size="large"
+                    fullWidth
+                    startIcon={
+                      <Box
+                        sx={{
+                          bgcolor: "primary.main",
+                          color: "white",
+                          width: 32,
+                          height: 32,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.875rem",
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
                       >
-                        {results.length} result{results.length !== 1 ? "s" : ""}
+                        {idx + 1}
+                      </Box>
+                    }
+                    sx={{
+                      justifyContent: "flex-start",
+                      textTransform: "none",
+                      fontSize: "1rem",
+                      py: 2,
+                      px: 2,
+                      textAlign: "left",
+                      fontWeight: 500,
+                      borderColor: "divider",
+                      color: "text.primary",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        bgcolor: "rgba(25, 118, 210, 0.04)",
+                      },
+                    }}
+                  >
+                    {sec.title}
+                  </Button>
+                ))}
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Sections */}
+          <Stack spacing={5}>
+            {content.sections.map((sec, idx) => (
+              <Card
+                key={sec.id}
+                id={sec.id}
+                sx={{
+                  bgcolor: "white",
+                  scrollMarginTop: 80,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 2,
+                      mb: 3,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        bgcolor: "primary.main",
+                        color: "white",
+                        minWidth: 56,
+                        height: 56,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "1.75rem",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {idx + 1}
+                    </Box>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        color: "text.primary",
+                        pt: 0.5,
+                      }}
+                    >
+                      {sec.title}
+                    </Typography>
+                  </Box>
+
+                  {sec.summary && (
+                    <Box
+                      sx={{
+                        mb: 3,
+                        p: 2.5,
+                        bgcolor: "rgba(25, 118, 210, 0.04)",
+                        borderLeft: "4px solid",
+                        borderColor: "primary.main",
+                      }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontWeight: 500,
+                          color: "text.primary",
+                        }}
+                      >
+                        {sec.summary}
                       </Typography>
-                      <Stack spacing={2}>
-                        {results.map((r) => (
-                          <Link
-                            key={r.id}
-                            href={`#${r.id}`}
-                            underline="none"
+                    </Box>
+                  )}
+
+                  {sec.body && (
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        mb: 3,
+                        color: "text.secondary",
+                      }}
+                    >
+                      {sec.body}
+                    </Typography>
+                  )}
+
+                  {/* Subsections */}
+                  {(sec.children ?? []).map((sub) => (
+                    <Card
+                      key={sub.id}
+                      id={sub.id}
+                      variant="outlined"
+                      sx={{
+                        mt: 3,
+                        scrollMarginTop: 80,
+                        borderColor: "divider",
+                        bgcolor: "background.paper",
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography
+                          variant="h4"
+                          gutterBottom
+                          sx={{
+                            color: "primary.main",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {sub.title}
+                        </Typography>
+                        {sub.summary && (
+                          <Typography
+                            variant="body1"
                             sx={{
-                              display: "block",
-                              p: 2,
-                              bgcolor: "background.paper",
-                              "&:hover": { bgcolor: "#f5f5f5" },
-                              transition: "background-color 0.2s",
+                              mb: 2,
+                              fontStyle: "italic",
+                              color: "text.secondary",
                             }}
                           >
-                            <Typography variant="body2" fontWeight={500} gutterBottom>
-                              {highlight(r.title, query)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {highlight(r.snippet || "", query)}
-                            </Typography>
-                          </Link>
-                        ))}
-                      </Stack>
-                    </Box>
-                  </Fade>
-                )}
-              </Box>
+                            {sub.summary}
+                          </Typography>
+                        )}
+                        {sub.body && (
+                          <Typography
+                            variant="body1"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {sub.body}
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
 
-              <Divider />
-
-              {/* Sections */}
-              {content.sections.map((sec) => (
-                <Section key={sec.id} block={sec} query={query} />
-              ))}
-            </Stack>
-          </Box>
+                  <Button
+                    href="#"
+                    variant="text"
+                    sx={{
+                      mt: 4,
+                      textTransform: "none",
+                      color: "primary.main",
+                      fontWeight: 500,
+                      "&:hover": {
+                        bgcolor: "rgba(25, 118, 210, 0.04)",
+                      },
+                    }}
+                  >
+                    ↑ Back to top
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
         </Box>
 
-        {/* Footer spacing */}
-        <Box sx={{ height: 100 }} />
+        {/* Footer */}
+        <Box sx={{ height: 60 }} />
       </Box>
     </ThemeProvider>
   );
 }
 
-function Section({ block, query }: { block: GuideBlock; query: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(
-      block.id
-    )}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  return (
-    <Box id={block.id} component="section" sx={{ scrollMarginTop: 100 }}>
-      <Stack spacing={4}>
-        <Box>
-          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-            <Typography variant="h4" sx={{ flexGrow: 1 }}>
-              {highlight(block.title, query)}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={copy}
-              sx={{
-                color: copied ? "success.main" : "text.disabled",
-                "&:hover": { color: "primary.main" },
-              }}
-            >
-              {copied ? <Check fontSize="small" /> : <LinkIcon fontSize="small" />}
-            </IconButton>
-          </Stack>
-
-          {block.summary && (
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                mb: 3,
-                pl: 3,
-                borderLeft: "3px solid",
-                borderColor: "primary.main",
-                fontStyle: "italic",
-              }}
-            >
-              {highlight(block.summary, query)}
-            </Typography>
-          )}
-
-          {block.body && (
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              {highlight(block.body, query)}
-            </Typography>
-          )}
-        </Box>
-
-        {/* Subsections */}
-        {(block.children ?? []).map((sub) => (
-          <SubSection key={sub.id} block={sub} query={query} />
-        ))}
-      </Stack>
-    </Box>
-  );
-}
-
-function SubSection({ block, query }: { block: GuideBlock; query: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    const url = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(
-      block.id
-    )}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  return (
-    <Box
-      id={block.id}
-      sx={{
-        pl: 4,
-        py: 3,
-        bgcolor: "background.paper",
-        scrollMarginTop: 100,
-      }}
-    >
-      <Stack spacing={2}>
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <Typography variant="h5" sx={{ flexGrow: 1 }}>
-            {highlight(block.title, query)}
-          </Typography>
-          <IconButton
-            size="small"
-            onClick={copy}
-            sx={{
-              color: copied ? "success.main" : "text.disabled",
-              "&:hover": { color: "primary.main" },
-            }}
-          >
-            {copied ? <Check fontSize="small" /> : <LinkIcon fontSize="small" />}
-          </IconButton>
-        </Stack>
-
-        {block.summary && (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-            {highlight(block.summary, query)}
-          </Typography>
-        )}
-
-        {block.body && (
-          <Typography variant="body1">{highlight(block.body, query)}</Typography>
-        )}
-      </Stack>
-    </Box>
-  );
-}
-
 export const CONTENT = {
   preface:
-    "An interactive walkthrough of the proposal: scope, methods, timeline, ethics, risks, and deliverables.",
+    "An interactive walkthrough of the proposal covering scope, methods, timeline, ethics, risks, and deliverables.",
   sections: [
     {
       id: "executive-summary",
