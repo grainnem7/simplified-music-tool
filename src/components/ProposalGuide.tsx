@@ -15,6 +15,10 @@ import {
   CardContent,
   Alert,
   Chip,
+  Tabs,
+  Tab,
+  Container,
+  Grid,
 } from "@mui/material";
 import {
   Home,
@@ -22,6 +26,10 @@ import {
   Search,
   KeyboardArrowRight,
   Code,
+  MenuBook,
+  Rocket,
+  Science,
+  Info,
 } from "@mui/icons-material";
 import BodyPartSelector from "./BodyPartSelector";
 import BodyDiagram from "./BodyDiagram";
@@ -354,6 +362,272 @@ function DemoRenderer({ type }: { type: "body-tracking" | "system-diagram" }) {
   }
 }
 
+// Interactive Demo Tab
+function InteractiveDemoTab() {
+  return (
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Typography
+        variant="h3"
+        sx={{
+          fontWeight: 800,
+          mb: 2,
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
+      >
+        Try the Interactive Demos
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          mb: 5,
+          color: "text.secondary",
+          fontSize: "1.125rem",
+        }}
+      >
+        Explore the core features of the system with these interactive demonstrations.
+      </Typography>
+
+      <Stack spacing={6}>
+        <BodyTrackingDemo />
+        <SystemDiagramDemo />
+      </Stack>
+
+      <Box
+        sx={{
+          mt: 6,
+          p: 4,
+          bgcolor: "#f8fafc",
+          border: "2px solid #e2e8f0",
+          borderRadius: "8px",
+          textAlign: "center",
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+          Ready to try the full application?
+        </Typography>
+        <Button
+          component={RouterLink}
+          to="/"
+          variant="contained"
+          size="large"
+          sx={{
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            px: 4,
+            py: 1.5,
+            fontSize: "1.1rem",
+            fontWeight: 700,
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: "0 8px 20px rgba(102, 126, 234, 0.4)",
+            },
+            transition: "all 0.2s",
+          }}
+        >
+          Launch Full Demo →
+        </Button>
+      </Box>
+    </Container>
+  );
+}
+
+// Landing page component
+function LandingPage({ projectTitle }: { projectTitle: string }) {
+  return (
+    <Box>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "white",
+          py: 8,
+          textAlign: "center",
+        }}
+      >
+        <Container maxWidth="lg">
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: "2rem", md: "3rem" },
+              fontWeight: 800,
+              mb: 3,
+              textShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            }}
+          >
+            {projectTitle}
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              mb: 4,
+              opacity: 0.95,
+              fontWeight: 400,
+              maxWidth: "800px",
+              mx: "auto",
+            }}
+          >
+            An accessible, gesture-controlled music tool co-designed with
+            disabled musicians
+          </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            justifyContent="center"
+          >
+            <Button
+              component={RouterLink}
+              to="/"
+              variant="contained"
+              size="large"
+              sx={{
+                bgcolor: "white",
+                color: "#667eea",
+                px: 4,
+                py: 1.5,
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                "&:hover": {
+                  bgcolor: "#f8fafc",
+                  transform: "translateY(-2px)",
+                },
+                transition: "all 0.2s",
+              }}
+            >
+              Try the Live Demo →
+            </Button>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* Feature Cards */}
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Grid container spacing={4}>
+          {[
+            {
+              icon: <Rocket sx={{ fontSize: 40 }} />,
+              title: "Accessible Design",
+              description:
+                "Co-designed with disabled musicians to ensure true accessibility and usability for diverse bodies and abilities.",
+              color: "#667eea",
+            },
+            {
+              icon: <Science sx={{ fontSize: 40 }} />,
+              title: "AI-Powered",
+              description:
+                "Uses machine learning for pose detection and gesture recognition, with customizable body part tracking.",
+              color: "#10b981",
+            },
+            {
+              icon: <Code sx={{ fontSize: 40 }} />,
+              title: "Browser-Based",
+              description:
+                "No installation required. Works directly in your browser using webcam and modern web technologies.",
+              color: "#f59e0b",
+            },
+          ].map((feature, idx) => (
+            <Grid item xs={12} md={4} key={idx}>
+              <Card
+                sx={{
+                  height: "100%",
+                  transition: "all 0.3s",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 4, textAlign: "center" }}>
+                  <Box
+                    sx={{
+                      color: feature.color,
+                      mb: 2,
+                    }}
+                  >
+                    {feature.icon}
+                  </Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 700,
+                      mb: 2,
+                      color: "text.primary",
+                    }}
+                  >
+                    {feature.title}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: "text.secondary",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {feature.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Quick Stats */}
+        <Box sx={{ mt: 8, textAlign: "center" }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              mb: 4,
+              color: "text.primary",
+            }}
+          >
+            Project Overview
+          </Typography>
+          <Grid container spacing={4}>
+            {[
+              { label: "Body Parts Tracked", value: "14+" },
+              { label: "Research Phases", value: "3" },
+              { label: "Technology Stack", value: "React + ML" },
+            ].map((stat, idx) => (
+              <Grid item xs={12} sm={4} key={idx}>
+                <Box
+                  sx={{
+                    p: 3,
+                    bgcolor: "#f8fafc",
+                    borderRadius: "8px",
+                  }}
+                >
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      fontWeight: 800,
+                      color: "#667eea",
+                      mb: 1,
+                    }}
+                  >
+                    {stat.value}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {stat.label}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Container>
+    </Box>
+  );
+}
+
 export default function ProposalGuide({
   content,
   projectTitle,
@@ -361,6 +635,7 @@ export default function ProposalGuide({
   content: GuideContent;
   projectTitle: string;
 }) {
+  const [currentTab, setCurrentTab] = useState(0);
   const [query, setQuery] = useState("");
   const hash = useHash();
   const all = useMemo(() => flatten(content.sections), [content]);
@@ -407,20 +682,30 @@ export default function ProposalGuide({
           sx={{
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
-            py: 3,
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             position: "sticky",
             top: 0,
             zIndex: 1000,
-            borderBottom: "3px solid rgba(255,255,255,0.2)",
           }}
         >
-          <Box sx={{ maxWidth: 1200, mx: "auto", px: 3 }}>
+          <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, pt: 2 }}>
             <Stack
               direction="row"
               justifyContent="space-between"
               alignItems="center"
+              sx={{ mb: 2 }}
             >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <MenuBook /> Research Proposal
+              </Typography>
               <Stack direction="row" spacing={2} alignItems="center">
                 <Button
                   component={RouterLink}
@@ -428,10 +713,10 @@ export default function ProposalGuide({
                   startIcon={<Home />}
                   sx={{
                     color: "white",
-                    fontSize: "0.95rem",
+                    fontSize: "0.875rem",
                     fontWeight: 600,
                     px: 2,
-                    py: 1,
+                    py: 0.75,
                     border: "1.5px solid rgba(255,255,255,0.3)",
                     "&:hover": {
                       bgcolor: "rgba(255,255,255,0.15)",
@@ -441,50 +726,58 @@ export default function ProposalGuide({
                 >
                   Home
                 </Button>
-                <Button
-                  component={RouterLink}
-                  to="/"
+                <IconButton
+                  onClick={() => window.print()}
                   sx={{
-                    bgcolor: "white",
-                    color: "#667eea",
-                    fontSize: "0.95rem",
-                    fontWeight: 700,
-                    px: 3,
-                    py: 1,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    color: "white",
+                    border: "1.5px solid rgba(255,255,255,0.3)",
                     "&:hover": {
-                      bgcolor: "#f8fafc",
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                      bgcolor: "rgba(255,255,255,0.15)",
+                      borderColor: "rgba(255,255,255,0.5)",
                     },
-                    transition: "all 0.2s",
                   }}
+                  aria-label="Print documentation"
                 >
-                  Try It Live →
-                </Button>
+                  <Print />
+                </IconButton>
               </Stack>
-              <IconButton
-                onClick={() => window.print()}
-                sx={{
-                  color: "white",
-                  border: "1.5px solid rgba(255,255,255,0.3)",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.15)",
-                    borderColor: "rgba(255,255,255,0.5)",
-                  },
-                }}
-                aria-label="Print documentation"
-              >
-                <Print />
-              </IconButton>
             </Stack>
+
+            {/* Tabs */}
+            <Tabs
+              value={currentTab}
+              onChange={(_, newValue) => setCurrentTab(newValue)}
+              sx={{
+                "& .MuiTab-root": {
+                  color: "rgba(255,255,255,0.7)",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  textTransform: "none",
+                  minHeight: 48,
+                  "&.Mui-selected": {
+                    color: "white",
+                  },
+                },
+                "& .MuiTabs-indicator": {
+                  backgroundColor: "white",
+                  height: 3,
+                },
+              }}
+            >
+              <Tab icon={<Info />} iconPosition="start" label="Overview" />
+              <Tab icon={<MenuBook />} iconPosition="start" label="Documentation" />
+              <Tab icon={<Code />} iconPosition="start" label="Interactive Demo" />
+            </Tabs>
           </Box>
         </Box>
 
-        {/* Main Content */}
-        <Box sx={{ maxWidth: 1000, mx: "auto", px: 3, py: 6 }}>
-          {/* Title & Search */}
-          <Box sx={{ mb: 6 }}>
+        {/* Tab Content */}
+        {currentTab === 0 && <LandingPage projectTitle={projectTitle} />}
+
+        {currentTab === 1 && (
+          <Box sx={{ maxWidth: 1000, mx: "auto", px: 3, py: 6 }}>
+            {/* Title & Search */}
+            <Box sx={{ mb: 6 }}>
             <Box
               sx={{
                 mb: 4,
@@ -921,7 +1214,10 @@ export default function ProposalGuide({
               </Card>
             ))}
           </Stack>
-        </Box>
+          </Box>
+        )}
+
+        {currentTab === 2 && <InteractiveDemoTab />}
 
         {/* Footer */}
         <Box sx={{ height: 60 }} />
