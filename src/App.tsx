@@ -5,6 +5,7 @@ import SetupScreen from './components/SetupScreen'
 import PerformanceView from './components/PerformanceView'
 import ThemeSelector from './components/ThemeSelector'
 import ProposalGuide, { CONTENT } from './components/ProposalGuide'
+import AboutPage from './components/AboutPage'
 import { ThemeProvider } from './contexts/ThemeContext'
 
 type AppState = 'setup' | 'performance'
@@ -53,6 +54,7 @@ function App() {
     <ThemeProvider>
       <Routes>
         <Route path="/" element={<MainApp />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route
           path="/proposal"
           element={
