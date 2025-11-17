@@ -437,191 +437,210 @@ function InteractiveDemoTab() {
   );
 }
 
-// Landing page component
+// Landing page component - Microsoft Docs style
 function LandingPage({ projectTitle }: { projectTitle: string }) {
   return (
-    <Box>
+    <Box sx={{ bgcolor: "background.default" }}>
       {/* Hero Section */}
       <Box
         sx={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "white",
-          py: 8,
-          textAlign: "center",
+          bgcolor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          py: 6,
         }}
       >
         <Container maxWidth="lg">
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: "2rem", md: "3rem" },
-              fontWeight: 800,
-              mb: 3,
-              textShadow: "0 2px 10px rgba(0,0,0,0.2)",
-            }}
-          >
-            {projectTitle}
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{
-              mb: 4,
-              opacity: 0.95,
-              fontWeight: 400,
-              maxWidth: "800px",
-              mx: "auto",
-            }}
-          >
-            An accessible, gesture-controlled music tool co-designed with
-            disabled musicians
-          </Typography>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            justifyContent="center"
-          >
-            <Button
-              component={RouterLink}
-              to="/"
-              variant="contained"
-              size="large"
+          <Box sx={{ maxWidth: 800 }}>
+            <Typography
+              variant="h2"
               sx={{
-                bgcolor: "white",
-                color: "#667eea",
-                px: 4,
-                py: 1.5,
-                fontSize: "1.1rem",
-                fontWeight: 700,
-                "&:hover": {
-                  bgcolor: "#f8fafc",
-                  transform: "translateY(-2px)",
-                },
-                transition: "all 0.2s",
+                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 600,
+                mb: 2,
+                color: "text.primary",
               }}
             >
-              Try the Live Demo →
-            </Button>
-          </Stack>
-        </Container>
-      </Box>
-
-      {/* Feature Cards */}
-      <Container maxWidth="lg" sx={{ py: 6 }}>
-        <Grid container spacing={4}>
-          {[
-            {
-              icon: <Rocket sx={{ fontSize: 40 }} />,
-              title: "Accessible Design",
-              description:
-                "Co-designed with disabled musicians to ensure true accessibility and usability for diverse bodies and abilities.",
-              color: "#667eea",
-            },
-            {
-              icon: <Science sx={{ fontSize: 40 }} />,
-              title: "AI-Powered",
-              description:
-                "Uses machine learning for pose detection and gesture recognition, with customizable body part tracking.",
-              color: "#10b981",
-            },
-            {
-              icon: <Code sx={{ fontSize: 40 }} />,
-              title: "Browser-Based",
-              description:
-                "No installation required. Works directly in your browser using webcam and modern web technologies.",
-              color: "#f59e0b",
-            },
-          ].map((feature, idx) => (
-            <Grid item xs={12} md={4} key={idx}>
-              <Card
+              {projectTitle}
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                mb: 3,
+                color: "text.secondary",
+                fontSize: "1.125rem",
+                lineHeight: 1.7,
+              }}
+            >
+              An accessible, gesture-controlled music tool co-designed with
+              disabled musicians, producing both a deployable instrument and a
+              research framework for inclusive AI design.
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <Button
+                component={RouterLink}
+                to="/"
+                variant="contained"
                 sx={{
-                  height: "100%",
-                  transition: "all 0.3s",
+                  bgcolor: "primary.main",
+                  color: "white",
+                  px: 3,
+                  py: 1,
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
                   "&:hover": {
-                    transform: "translateY(-8px)",
-                    boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+                    bgcolor: "primary.dark",
                   },
                 }}
               >
-                <CardContent sx={{ p: 4, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      color: feature.color,
-                      mb: 2,
-                    }}
-                  >
-                    {feature.icon}
-                  </Box>
+                Try Live Demo
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  const docTab = document.querySelector('[role="tab"]:nth-child(2)') as HTMLElement;
+                  if (docTab) docTab.click();
+                }}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                }}
+              >
+                Read Documentation
+              </Button>
+            </Stack>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Key Features */}
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            mb: 4,
+            color: "text.primary",
+          }}
+        >
+          Key Features
+        </Typography>
+        <Grid container spacing={3}>
+          {[
+            {
+              icon: <Rocket sx={{ fontSize: 24 }} />,
+              title: "Accessible Design",
+              description:
+                "Co-designed with disabled musicians to ensure true accessibility and usability for diverse bodies and abilities.",
+            },
+            {
+              icon: <Science sx={{ fontSize: 24 }} />,
+              title: "AI-Powered",
+              description:
+                "Uses machine learning for pose detection and gesture recognition, with customizable body part tracking.",
+            },
+            {
+              icon: <Code sx={{ fontSize: 24 }} />,
+              title: "Browser-Based",
+              description:
+                "No installation required. Works directly in your browser using webcam and modern web technologies.",
+            },
+          ].map((feature, idx) => (
+            <Grid item xs={12} md={4} key={idx}>
+              <Box
+                sx={{
+                  p: 3,
+                  height: "100%",
+                  borderLeft: "3px solid",
+                  borderColor: "primary.main",
+                  bgcolor: "background.paper",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    mb: 1.5,
+                    color: "primary.main",
+                  }}
+                >
+                  {feature.icon}
                   <Typography
-                    variant="h5"
+                    variant="h4"
                     sx={{
-                      fontWeight: 700,
-                      mb: 2,
+                      fontWeight: 600,
                       color: "text.primary",
                     }}
                   >
                     {feature.title}
                   </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: "text.secondary",
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "text.secondary",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {feature.description}
+                </Typography>
+              </Box>
             </Grid>
           ))}
         </Grid>
 
-        {/* Quick Stats */}
-        <Box sx={{ mt: 8, textAlign: "center" }}>
+        {/* Project Details */}
+        <Box
+          sx={{
+            mt: 6,
+            p: 4,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           <Typography
-            variant="h4"
+            variant="h3"
             sx={{
-              fontWeight: 700,
-              mb: 4,
+              mb: 3,
               color: "text.primary",
             }}
           >
             Project Overview
           </Typography>
-          <Grid container spacing={4}>
+          <Grid container spacing={3}>
             {[
               { label: "Body Parts Tracked", value: "14+" },
               { label: "Research Phases", value: "3" },
-              { label: "Technology Stack", value: "React + ML" },
+              { label: "Technology Stack", value: "React + TensorFlow.js + Tone.js" },
+              { label: "Target Users", value: "Disabled Musicians" },
+              { label: "Deployment", value: "Browser-Based" },
+              { label: "AI Model", value: "MoveNet Pose Detection" },
             ].map((stat, idx) => (
-              <Grid item xs={12} sm={4} key={idx}>
-                <Box
+              <Grid item xs={12} sm={6} md={4} key={idx}>
+                <Typography
+                  variant="body2"
                   sx={{
-                    p: 3,
-                    bgcolor: "#f8fafc",
-                    borderRadius: "8px",
+                    color: "text.secondary",
+                    mb: 0.5,
+                    fontSize: "0.8125rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
                   }}
                 >
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      fontWeight: 800,
-                      color: "#667eea",
-                      mb: 1,
-                    }}
-                  >
-                    {stat.value}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: "text.secondary",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {stat.label}
-                  </Typography>
-                </Box>
+                  {stat.label}
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 600,
+                    color: "text.primary",
+                  }}
+                >
+                  {stat.value}
+                </Typography>
               </Grid>
             ))}
           </Grid>
