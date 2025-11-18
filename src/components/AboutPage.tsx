@@ -122,7 +122,7 @@ function AboutPage() {
         }}
       >
         <Container maxWidth="lg">
-          <Box sx={{ maxWidth: 900 }}>
+          <Box sx={{ maxWidth: 900, mx: "auto" }}>
             <Typography
               variant="h2"
               component="h1"
@@ -151,7 +151,7 @@ function AboutPage() {
               instruments around their own movements, in collaboration with Drake
               Music NI.
             </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
               <Button
                 variant="contained"
                 onClick={scrollToTour}
@@ -321,12 +321,13 @@ function AboutPage() {
             sx={{
               mb: 4,
               color: "text.primary",
+              textAlign: "center",
             }}
           >
             Learn More
           </Typography>
 
-          <Box sx={{ maxWidth: 900 }}>
+          <Box sx={{ maxWidth: 900, mx: "auto" }}>
             {EXPANDABLE_SECTIONS.map((section) => (
               <Accordion
                 key={section.id}
