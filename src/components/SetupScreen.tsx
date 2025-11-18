@@ -22,34 +22,19 @@ function SetupScreen({ onComplete }: SetupScreenProps) {
       <div className="setup-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
           <h1 className="setup-title">Configure Body Tracking</h1>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Link
-              to="/about"
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid currentColor',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}
-            >
-              About
-            </Link>
-            <Link
-              to="/proposal"
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid currentColor',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}
-            >
-              Proposal
-            </Link>
-          </div>
+          <Link
+            to="/about"
+            style={{
+              padding: '0.5rem 1rem',
+              border: '1px solid currentColor',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}
+          >
+            About
+          </Link>
         </div>
         <p className="setup-subtitle">
           Select the body parts you want to track for music generation
