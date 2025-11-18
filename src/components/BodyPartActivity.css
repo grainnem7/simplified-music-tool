@@ -1,0 +1,126 @@
+.body-part-activity {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.activity-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.activity-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 90px;
+}
+
+.activity-label {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.activity-role {
+  font-size: 0.625rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-role.role-melodic {
+  background: var(--accent-color);
+  color: white;
+}
+
+.activity-role.role-bass {
+  background: #9c27b0;
+  color: white;
+}
+
+.activity-role.role-chord {
+  background: #4caf50;
+  color: white;
+}
+
+.activity-bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.activity-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.1s ease-out;
+}
+
+.activity-bar.role-melodic {
+  background: linear-gradient(90deg, var(--accent-color), #64b5f6);
+}
+
+.activity-bar.role-bass {
+  background: linear-gradient(90deg, #9c27b0, #ce93d8);
+}
+
+.activity-bar.role-chord {
+  background: linear-gradient(90deg, #4caf50, #81c784);
+}
+
+.activity-legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.625rem;
+  color: var(--text-tertiary);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.legend-dot.role-melodic {
+  background: var(--accent-color);
+}
+
+.legend-dot.role-bass {
+  background: #9c27b0;
+}
+
+.legend-dot.role-chord {
+  background: #4caf50;
+}

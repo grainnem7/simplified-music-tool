@@ -3,8 +3,11 @@ import * as Tone from 'tone'
 import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
 import BodyDiagram from './BodyDiagram'
+import BodyPartActivity from './BodyPartActivity'
+import SettingsPanel from './SettingsPanel'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
+import { useMusicSettings } from '../contexts/MusicSettingsContext'
 import './PerformanceView.css'
 
 interface PerformanceViewProps {
@@ -16,10 +19,12 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const webcamRef = useRef<any>(null)
 
+  const { settings } = useMusicSettings()
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
-  const { generateMusic, stopMusic, isMobile } = useMusicGeneration()
+  const { generateMusic, stopMusic, isMobile, currentChord, movementIntensity, bodyPartIntensities } = useMusicGeneration()
 
   useEffect(() => {
     if (isPerforming && poses) {
@@ -89,13 +94,39 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         <button onClick={handleTogglePerformance} className="button">
           {isPerforming ? 'Stop' : 'Start'} Performance
         </button>
+        <button onClick={() => setSettingsOpen(true)} className="button secondary">
+          Settings
+        </button>
 
         {isMobile && (
           <div className="mobile-mode-indicator">
-            <span>📱</span> Mobile Optimized
+            <span>Mobile Optimized</span>
           </div>
         )}
       </div>
+
+      {/* Visual Feedback */}
+      {isPerforming && (
+        <div className="visual-feedback">
+          {settings.showCurrentChord && currentChord && (
+            <div className="current-chord">
+              <span className="chord-label">Chord:</span>
+              <span className="chord-name">{currentChord}</span>
+            </div>
+          )}
+          {settings.showMovementIntensity && (
+            <div className="movement-intensity">
+              <span className="intensity-label">Movement:</span>
+              <div className="intensity-bar">
+                <div
+                  className="intensity-fill"
+                  style={{ width: `${Math.min(movementIntensity * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="error-message">
@@ -121,6 +152,13 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
               <p className="empty-state">No body parts selected</p>
             )}
           </div>
+
+          {isPerforming && (
+            <BodyPartActivity
+              bodyPartIntensities={bodyPartIntensities}
+              selectedBodyParts={selectedBodyParts}
+            />
+          )}
 
           <div className="music-controls">
             <MusicGenerator
@@ -162,6 +200,8 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
       >
         Debug
       </button>
+
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

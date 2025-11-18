@@ -6,6 +6,7 @@ import PerformanceView from './components/PerformanceView'
 import ThemeSelector from './components/ThemeSelector'
 import AboutPage from './components/AboutPage'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { MusicSettingsProvider } from './contexts/MusicSettingsContext'
 
 type AppState = 'setup' | 'performance'
 
@@ -51,10 +52,12 @@ function MainApp() {
 function App() {
   return (
     <ThemeProvider>
-      <Routes>
-        <Route path="/" element={<MainApp />} />
-        <Route path="/about" element={<AboutPage />} />
-      </Routes>
+      <MusicSettingsProvider>
+        <Routes>
+          <Route path="/" element={<MainApp />} />
+          <Route path="/about" element={<AboutPage />} />
+        </Routes>
+      </MusicSettingsProvider>
     </ThemeProvider>
   )
 }

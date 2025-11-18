@@ -2,6 +2,105 @@ import { useCallback, useRef, useState, useEffect } from 'react'
 import * as Tone from 'tone'
 import { Pose } from '@tensorflow-models/pose-detection'
 import { BODY_PART_TO_KEYPOINT } from '../services/musicMapping'
+import { useMusicSettings, SCALES, CHORD_PROGRESSIONS as CONTEXT_CHORD_PROGRESSIONS, ScaleType, SynthType } from '../contexts/MusicSettingsContext'
+
+// Map SynthType to Tone.js oscillator type string
+const synthTypeToOscillator = (synthType: SynthType): string => {
+  switch (synthType) {
+    case 'sine': return 'sine'
+    case 'triangle': return 'triangle'
+    case 'square': return 'square'
+    case 'sawtooth': return 'sawtooth'
+    case 'pulse': return 'pulse'
+    case 'pwm': return 'pwm'
+    default: return 'sine'
+  }
+}
+
+// Note names for building scales
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+// Helper to generate a scale from root note and scale type
+const generateScale = (rootNote: string, scaleType: ScaleType): string[] => {
+  const rootIndex = NOTE_NAMES.indexOf(rootNote.replace('b', '#').replace('Db', 'C#').replace('Eb', 'D#').replace('Gb', 'F#').replace('Ab', 'G#').replace('Bb', 'A#'))
+  if (rootIndex === -1) return NOTE_NAMES // fallback
+
+  const intervals = SCALES[scaleType].intervals
+  return intervals.map(interval => NOTE_NAMES[(rootIndex + interval) % 12])
+}
+
+// Helper to build chord notes from a chord name and octave
+const buildChordNotes = (chordName: string, baseOctave: number): string[] => {
+  // Parse chord name to get root and type
+  const match = chordName.match(/^([A-G][#b]?)(.*?)$/)
+  if (!match) return []
+
+  const root = match[1]
+  const type = match[2]
+  const rootIndex = NOTE_NAMES.indexOf(root.replace('b', '#').replace('Db', 'C#').replace('Eb', 'D#').replace('Gb', 'F#').replace('Ab', 'G#').replace('Bb', 'A#'))
+
+  let intervals: number[] = []
+  let mood = 'contemplative'
+
+  // Determine chord intervals based on type
+  if (type.includes('Maj7') || type.includes('maj7')) {
+    intervals = [0, 4, 7, 11] // Major 7th
+    mood = 'bright'
+  } else if (type.includes('m7') || type.includes('min7')) {
+    intervals = [0, 3, 7, 10] // Minor 7th
+    mood = 'contemplative'
+  } else if (type.includes('7')) {
+    intervals = [0, 4, 7, 10] // Dominant 7th
+    mood = 'brightening'
+  } else if (type.includes('m7b5') || type.includes('ø')) {
+    intervals = [0, 3, 6, 10] // Half-diminished
+    mood = 'deeper'
+  } else if (type.includes('m') || type.includes('min')) {
+    intervals = [0, 3, 7] // Minor triad
+    mood = 'contemplative'
+  } else {
+    intervals = [0, 4, 7] // Major triad
+    mood = 'bright'
+  }
+
+  // Build pad chord (spread voicing)
+  const padNotes = intervals.map(interval => {
+    const noteIndex = (rootIndex + interval) % 12
+    const octave = baseOctave + Math.floor((rootIndex + interval) / 12)
+    return NOTE_NAMES[noteIndex] + octave
+  })
+
+  // Add extensions for fuller sound
+  const extendedPadNotes = [
+    ...padNotes,
+    NOTE_NAMES[(rootIndex + intervals[2]) % 12] + (baseOctave + 1), // 5th up an octave
+    NOTE_NAMES[(rootIndex + intervals[3] || intervals[2]) % 12] + (baseOctave + 1) // 7th or 5th
+  ]
+
+  return extendedPadNotes
+}
+
+// Helper to get bass notes for a chord
+const getBassNotes = (chordName: string): string[] => {
+  const match = chordName.match(/^([A-G][#b]?)/)
+  if (!match) return ['C1', 'C2']
+
+  const root = match[1]
+  const rootIndex = NOTE_NAMES.indexOf(root.replace('b', '#').replace('Db', 'C#').replace('Eb', 'D#').replace('Gb', 'F#').replace('Ab', 'G#').replace('Bb', 'A#'))
+  const fifth = NOTE_NAMES[(rootIndex + 7) % 12]
+
+  return [root + '1', root + '2', fifth + '1']
+}
+
+// Helper to get mood from chord type
+const getMoodFromChord = (chordName: string): string => {
+  if (chordName.includes('Maj7') || chordName.includes('maj7')) return 'bright'
+  if (chordName.includes('m7b5') || chordName.includes('ø')) return 'deeper'
+  if (chordName.includes('m7') || chordName.includes('min7')) return 'contemplative'
+  if (chordName.includes('7')) return 'brightening'
+  if (chordName.includes('m') || chordName.includes('min')) return 'returning'
+  return 'peaceful'
+}
 
 // Detect if we're on a mobile device
 const isMobile = () => {
@@ -130,6 +229,7 @@ const CHORD_PROGRESSIONS = [
 ]
 
 export function useMusicGeneration() {
+  const { settings } = useMusicSettings()
   const padSynthRef = useRef<Tone.PolySynth | null>(null)
   const bassPadSynthRef = useRef<Tone.PolySynth | null>(null) // Bass pad synth for left side
   const harpSynthRef = useRef<Tone.PolySynth | null>(null) // Harp-like sound for right side
@@ -138,7 +238,112 @@ export function useMusicGeneration() {
   const filterRef = useRef<Tone.Filter | null>(null)
   const chorusRef = useRef<Tone.Chorus | null>(null) // For lush sound
   const [currentPreset, setCurrentPreset] = useState<string>('ambient')
+  const [currentChord, setCurrentChord] = useState<string>('Dm7')
+  const [movementIntensity, setMovementIntensity] = useState<number>(0)
+  const [bodyPartIntensities, setBodyPartIntensities] = useState<Record<string, number>>({})
   const isInitializedRef = useRef(false)
+
+  // Apply audio settings from context when they change
+  useEffect(() => {
+    if (reverbRef.current) {
+      reverbRef.current.wet.value = settings.reverbAmount
+    }
+    if (delayRef.current) {
+      delayRef.current.wet.value = settings.delayAmount * 0.5
+    }
+    if (filterRef.current) {
+      const freq = 500 + (settings.filterFrequency * 3500)
+      filterRef.current.frequency.value = freq
+      filterRef.current.type = settings.filterType
+    }
+
+    // Update synth oscillator types
+    if (harpSynthRef.current) {
+      try {
+        harpSynthRef.current.set({
+          oscillator: { type: synthTypeToOscillator(settings.melodicSynthType) as any }
+        })
+      } catch (e) {
+        console.warn('Could not update melodic synth type:', e)
+      }
+    }
+    if (bassPadSynthRef.current) {
+      try {
+        bassPadSynthRef.current.set({
+          oscillator: { type: synthTypeToOscillator(settings.bassSynthType) as any }
+        })
+      } catch (e) {
+        console.warn('Could not update bass synth type:', e)
+      }
+    }
+    if (padSynthRef.current) {
+      try {
+        padSynthRef.current.set({
+          oscillator: { type: synthTypeToOscillator(settings.chordSynthType) as any }
+        })
+      } catch (e) {
+        console.warn('Could not update chord synth type:', e)
+      }
+    }
+
+    // Update envelope settings on all synths
+    const attackTime = 0.001 + (settings.attackTime * 0.499) // 0.001s to 0.5s
+    const releaseTime = 0.1 + (settings.releaseTime * 1.9) // 0.1s to 2s
+
+    if (harpSynthRef.current) {
+      try {
+        harpSynthRef.current.set({
+          envelope: {
+            attack: attackTime,
+            release: releaseTime
+          }
+        })
+      } catch (e) {
+        console.warn('Could not update melodic envelope:', e)
+      }
+    }
+    if (bassPadSynthRef.current) {
+      try {
+        bassPadSynthRef.current.set({
+          envelope: {
+            attack: attackTime * 2, // Bass needs slower attack
+            release: releaseTime * 1.5
+          }
+        })
+      } catch (e) {
+        console.warn('Could not update bass envelope:', e)
+      }
+    }
+    if (padSynthRef.current) {
+      try {
+        padSynthRef.current.set({
+          envelope: {
+            attack: attackTime * 1.5,
+            release: releaseTime * 1.2
+          }
+        })
+      } catch (e) {
+        console.warn('Could not update chord envelope:', e)
+      }
+    }
+
+    // Update chorus for harmonic richness
+    if (chorusRef.current) {
+      chorusRef.current.wet.value = settings.harmonicRichness * 0.4
+      chorusRef.current.depth = settings.harmonicRichness
+    }
+  }, [
+    settings.reverbAmount,
+    settings.delayAmount,
+    settings.filterFrequency,
+    settings.filterType,
+    settings.melodicSynthType,
+    settings.bassSynthType,
+    settings.chordSynthType,
+    settings.attackTime,
+    settings.releaseTime,
+    settings.harmonicRichness
+  ])
   const lastNoteTimeRef = useRef<Record<string, number>>({}) // Track per body part
   const lastChordTimeRef = useRef<number>(0)
   // Removed unused lastBassPadTimeRef
@@ -274,14 +479,13 @@ export function useMusicGeneration() {
           // Get current audio context state
           const contextState = {
             sampleRate: Tone.context.sampleRate,
-            // Removed baseLatency and outputLatency - not available on BaseContext
             lookAhead: Tone.context.lookAhead || 0,
           }
-          
+
           console.log('Audio context performance:', contextState)
-          
+
           // Report simplified latency metric for performance tracking
-          const totalLatency = (contextState.baseLatency + contextState.outputLatency) * 1000
+          const totalLatency = contextState.lookAhead * 1000
           reportPerformance('audioLatency', totalLatency)
         }
       } catch (err) {
@@ -342,186 +546,359 @@ export function useMusicGeneration() {
     const bodyPartsToProcess = mobile && selectedBodyParts.length > 3
       ? selectedBodyParts.slice(0, 3)
       : selectedBodyParts
-    
-    // Separate left and right body parts
-    const leftParts = bodyPartsToProcess.filter(part => isLeftSide(part))
-    const rightParts = bodyPartsToProcess.filter(part => isRightSide(part))
-    
-    // Get current chord for harmonic context
-    const currentChord = CHORD_PROGRESSIONS[currentChordIndexRef.current]
+
+    // Separate body parts by their configured roles (not just left/right)
+    // First filter out disabled parts
+    const enabledParts = bodyPartsToProcess.filter(part => {
+      const config = settings.bodyPartConfigs[part]
+      return config?.role !== 'disabled'
+    })
+
+    const bassParts = enabledParts.filter(part => {
+      const config = settings.bodyPartConfigs[part]
+      return config?.role === 'bass'
+    })
+    const chordParts = enabledParts.filter(part => {
+      const config = settings.bodyPartConfigs[part]
+      return config?.role === 'chord'
+    })
+    const melodicParts = enabledParts.filter(part => {
+      const config = settings.bodyPartConfigs[part]
+      return config?.role === 'melodic'
+    })
+
+    // Parts without config use default left/right behavior
+    const unconfiguredParts = enabledParts.filter(part => {
+      const config = settings.bodyPartConfigs[part]
+      return !config
+    })
+
+    // Add unconfigured parts to appropriate arrays based on side
+    unconfiguredParts.forEach(part => {
+      if (isLeftSide(part)) {
+        bassParts.push(part)
+      } else if (isRightSide(part)) {
+        melodicParts.push(part)
+      }
+    })
+
+    // Debug logging (throttled)
+    if ((bassParts.length > 0 || melodicParts.length > 0 || chordParts.length > 0) &&
+        currentTime - lastChordChangeTimeRef.current < 100) {
+      console.log('Body part roles:', {
+        bass: bassParts,
+        melodic: melodicParts,
+        chord: chordParts,
+        configs: Object.fromEntries(
+          bodyPartsToProcess.map(p => [p, settings.bodyPartConfigs[p]?.role])
+        )
+      })
+    }
+
+    // Get chord progression from settings
+    const selectedProgression = CONTEXT_CHORD_PROGRESSIONS[settings.chordProgression]
+    const chordNames = selectedProgression.chords
+    const currentChordName = chordNames[currentChordIndexRef.current % chordNames.length]
+
+    // Build current chord data dynamically
+    const chordData = {
+      name: currentChordName,
+      mood: getMoodFromChord(currentChordName),
+      padChord: buildChordNotes(currentChordName, 2),
+      bassChord: getBassNotes(currentChordName)
+    }
+
+    // Generate scale from settings
+    const userScale = generateScale(settings.rootNote, settings.scale)
+
     currentMusicalState = {
-      rootNote: currentChord.rootNote,
-      chordTones: currentChord.chordTones,
-      bassNote: currentChord.rootNote
+      rootNote: settings.rootNote,
+      chordTones: userScale.slice(0, 4),
+      bassNote: settings.rootNote
     }
     
-    // Process left side for chord control and bass
-    let totalLeftMovement = 0
-    leftParts.forEach(bodyPart => {
+    // Process bass parts for chord control and bass
+    let totalBassMovement = 0
+    bassParts.forEach(bodyPart => {
       const possibleKeypointNames = BODY_PART_TO_KEYPOINT[bodyPart] || [bodyPart]
       const keypoint = pose.keypoints.find(kp => {
         return possibleKeypointNames.includes(kp.name || '')
       })
-      
-      const confidenceThreshold = mobile ? 0.4 : 0.3
-      
+
+      // Use settings for confidence threshold
+      const confidenceThreshold = settings.confidenceThreshold
+
       if (keypoint && keypoint.score && keypoint.score > confidenceThreshold) {
         const currentPos = { x: keypoint.x, y: keypoint.y }
         const previousPos = previousPositionsRef.current[bodyPart]
-        
+
         if (previousPos) {
           const distance = Math.sqrt(
-            Math.pow(currentPos.x - previousPos.x, 2) + 
+            Math.pow(currentPos.x - previousPos.x, 2) +
             Math.pow(currentPos.y - previousPos.y, 2)
           )
-          
+
           // Accumulate movement for chord changes
-          totalLeftMovement += distance
-          
+          totalBassMovement += distance
+
           // Calculate velocity with smoothing
           const prevVelocity = previousVelocityRef.current[bodyPart] || 0
           const currentVelocity = distance * 50
           const smoothedVelocity = prevVelocity * 0.7 + currentVelocity * 0.3
           previousVelocityRef.current[bodyPart] = smoothedVelocity
-          
-          // Play bass pad based on movement
-          const moveThreshold = 0.02
+
+          // Play bass pad based on movement - use settings threshold
+          const moveThreshold = settings.movementThreshold
           if (distance > moveThreshold && bassPadSynthRef.current) {
             if (!lastNoteTimeRef.current[bodyPart]) {
               lastNoteTimeRef.current[bodyPart] = 0
             }
-            
-            // Different timing for different body parts
-            const baseInterval = 400
+
+            // Different timing for different body parts - use settings interval and tempo
+            const tempoMultiplier = (settings.tempoRange[0] + settings.tempoRange[1]) / 180 // Normalize tempo
+            const baseInterval = (settings.noteInterval * 1.6) / tempoMultiplier
             const intervalMultiplier = bodyPart.includes('Wrist') ? 0.8 : 1.2
             const noteInterval = baseInterval * intervalMultiplier
-            
+
             if (currentTime - lastNoteTimeRef.current[bodyPart] > noteInterval) {
-              // Dynamic volume based on velocity
-              const baseVolume = 0.3
+              // Get body part config sensitivity for dynamic volume
+              const bodyPartConfig = settings.bodyPartConfigs[bodyPart]
+              const sensitivityMultiplier = bodyPartConfig?.sensitivity || 1.0
+
+              // Dynamic volume based on velocity and body part sensitivity
+              const baseVolume = 0.3 * sensitivityMultiplier
               const velocityBoost = Math.min(0.2, smoothedVelocity * 0.1)
               const volume = baseVolume + velocityBoost
-              
-              // Y position affects which bass notes to emphasize
-              const bassChord = currentChord.bassChord
-              const notesToPlay = keypoint.y < 0.5 
-                ? bassChord.slice(0, 2) // Higher position = two notes
-                : [bassChord[0]] // Lower position = just root
-              
+
+              // Get octave range from body part config
+              const octaveRange = bodyPartConfig?.octaveRange || [1, 3]
+
+              // Y position affects which bass notes to emphasize and octave
+              const bassNotes = chordData.bassChord
+              // Adjust bass notes to use configured octave range
+              const adjustedBassNotes = bassNotes.map(note => {
+                const noteName = note.replace(/[0-9]/g, '')
+                const baseOctave = octaveRange[0]
+                const octaveBoost = keypoint.y < 0.5 ? 1 : 0
+                return noteName + Math.min(octaveRange[1], baseOctave + octaveBoost)
+              })
+
+              const notesToPlay = keypoint.y < 0.5
+                ? adjustedBassNotes.slice(0, 2) // Higher position = two notes
+                : [adjustedBassNotes[0]] // Lower position = just root
+
               // Musical duration
               bassPadSynthRef.current.triggerAttackRelease(notesToPlay, '4n', undefined, volume)
               lastNoteTimeRef.current[bodyPart] = currentTime
             }
           }
         }
-        
+
         previousPositionsRef.current[bodyPart] = currentPos
       }
     })
-    
-    // Accumulate left movement for chord changes
-    leftMovementAccumulatorRef.current += totalLeftMovement
-    
+
+    // Process chord parts - they trigger chord changes and play pad chords
+    let totalChordMovement = 0
+    chordParts.forEach(bodyPart => {
+      const possibleKeypointNames = BODY_PART_TO_KEYPOINT[bodyPart] || [bodyPart]
+      const keypoint = pose.keypoints.find(kp => {
+        return possibleKeypointNames.includes(kp.name || '')
+      })
+
+      const confidenceThreshold = settings.confidenceThreshold
+
+      if (keypoint && keypoint.score && keypoint.score > confidenceThreshold) {
+        const currentPos = { x: keypoint.x, y: keypoint.y }
+        const previousPos = previousPositionsRef.current[bodyPart]
+
+        if (previousPos) {
+          const distance = Math.sqrt(
+            Math.pow(currentPos.x - previousPos.x, 2) +
+            Math.pow(currentPos.y - previousPos.y, 2)
+          )
+
+          // Chord parts accumulate movement for chord changes
+          totalChordMovement += distance
+
+          // Calculate velocity
+          const prevVelocity = previousVelocityRef.current[bodyPart] || 0
+          const currentVelocity = distance * 50
+          const smoothedVelocity = prevVelocity * 0.7 + currentVelocity * 0.3
+          previousVelocityRef.current[bodyPart] = smoothedVelocity
+
+          // Play pad chord based on movement
+          const moveThreshold = settings.movementThreshold
+          if (distance > moveThreshold && padSynthRef.current) {
+            if (!lastNoteTimeRef.current[bodyPart]) {
+              lastNoteTimeRef.current[bodyPart] = 0
+            }
+
+            // Chord timing - slower than melodic
+            const tempoMultiplier = (settings.tempoRange[0] + settings.tempoRange[1]) / 180
+            const baseInterval = (settings.noteInterval * 2) / tempoMultiplier
+            const noteInterval = baseInterval
+
+            if (currentTime - lastNoteTimeRef.current[bodyPart] > noteInterval) {
+              const bodyPartConfig = settings.bodyPartConfigs[bodyPart]
+              const sensitivityMultiplier = bodyPartConfig?.sensitivity || 1.0
+              const octaveRange = bodyPartConfig?.octaveRange || [2, 4]
+
+              // Build chord at configured octave
+              const chordNotes = buildChordNotes(currentChordName, octaveRange[0])
+              const volume = 0.2 * sensitivityMultiplier
+
+              padSynthRef.current.triggerAttackRelease(chordNotes, '2n', undefined, volume)
+              lastNoteTimeRef.current[bodyPart] = currentTime
+            }
+          }
+        }
+
+        previousPositionsRef.current[bodyPart] = currentPos
+      }
+    })
+
+    // Accumulate movement for chord changes (from both bass and chord parts)
+    leftMovementAccumulatorRef.current += totalBassMovement + totalChordMovement
+
     // Check if we should change chord based on accumulated movement
     const chordChangeThreshold = mobile ? 1.5 : 1.0 // Amount of movement needed
     const minTimeBetweenChanges = 2000 // At least 2 seconds between changes
-    
-    if (leftMovementAccumulatorRef.current > chordChangeThreshold && 
+
+    if (leftMovementAccumulatorRef.current > chordChangeThreshold &&
         currentTime - lastChordChangeTimeRef.current > minTimeBetweenChanges) {
-      
-      // Change to next chord
-      currentChordIndexRef.current = (currentChordIndexRef.current + 1) % CHORD_PROGRESSIONS.length
-      const newChord = CHORD_PROGRESSIONS[currentChordIndexRef.current]
-      
+
+      // Change to next chord in selected progression
+      currentChordIndexRef.current = (currentChordIndexRef.current + 1) % chordNames.length
+      const newChordName = chordNames[currentChordIndexRef.current]
+      const newChordData = {
+        name: newChordName,
+        mood: getMoodFromChord(newChordName),
+        padChord: buildChordNotes(newChordName, 2),
+        bassChord: getBassNotes(newChordName)
+      }
+
       // Update musical state
       currentMusicalState = {
-        rootNote: newChord.rootNote,
-        chordTones: newChord.chordTones,
-        bassNote: newChord.rootNote
+        rootNote: settings.rootNote,
+        chordTones: userScale.slice(0, 4),
+        bassNote: settings.rootNote
       }
-      
+
       // Play the new chord
-      padSynthRef.current.triggerAttackRelease(newChord.padChord, '2n', undefined, 0.2)
-      
-      console.log(`Chord changed to: ${newChord.name} (${newChord.mood})`)
-      
+      padSynthRef.current.triggerAttackRelease(newChordData.padChord, '2n', undefined, 0.2)
+
+      console.log(`Chord changed to: ${newChordData.name} (${newChordData.mood})`)
+
+      // Update current chord state for UI
+      setCurrentChord(newChordData.name)
+
       // Reset melodic pattern for new chord
       melodicPatternIndexRef.current = 0
-      
+
       // Reset accumulator and update time
       leftMovementAccumulatorRef.current = 0
       lastChordChangeTimeRef.current = currentTime
       lastChordTimeRef.current = currentTime
     }
+
+    // Update movement intensity for UI (normalized 0-1)
+    const totalMovement = totalBassMovement + totalChordMovement
+    const intensityFromMovement = Math.min(1, totalMovement * 10 + leftMovementAccumulatorRef.current * 0.5)
+    setMovementIntensity(intensityFromMovement)
+
+    // Track per-body-part intensities
+    const newIntensities: Record<string, number> = {}
+
+    // Calculate intensity for each enabled part based on velocity
+    enabledParts.forEach(bodyPart => {
+      const velocity = previousVelocityRef.current[bodyPart] || 0
+      // Normalize velocity to 0-1 range (velocity is typically 0-50)
+      newIntensities[bodyPart] = Math.min(1, velocity / 30)
+    })
+
+    setBodyPartIntensities(newIntensities)
     
-    // Process right side for melodic control with musical phrasing
-    let rightSideActive = false
-    rightParts.forEach(bodyPart => {
+    // Process melodic parts for melodic control with musical phrasing
+    let melodicActive = false
+    melodicParts.forEach(bodyPart => {
       const possibleKeypointNames = BODY_PART_TO_KEYPOINT[bodyPart] || [bodyPart]
       const keypoint = pose.keypoints.find(kp => {
         return possibleKeypointNames.includes(kp.name || '')
       })
-      
-      const confidenceThreshold = mobile ? 0.4 : 0.3
-      
+
+      // Use settings for confidence threshold
+      const confidenceThreshold = settings.confidenceThreshold
+
       if (keypoint && keypoint.score && keypoint.score > confidenceThreshold) {
         const currentPos = { x: keypoint.x, y: keypoint.y }
         const previousPos = previousPositionsRef.current[bodyPart]
-        
+
         if (previousPos) {
           const distance = Math.sqrt(
-            Math.pow(currentPos.x - previousPos.x, 2) + 
+            Math.pow(currentPos.x - previousPos.x, 2) +
             Math.pow(currentPos.y - previousPos.y, 2)
           )
-          
+
           // Calculate velocity with smoothing
           const prevVelocity = previousVelocityRef.current[bodyPart] || 0
           const currentVelocity = distance * 50
           const smoothedVelocity = prevVelocity * 0.7 + currentVelocity * 0.3
           previousVelocityRef.current[bodyPart] = smoothedVelocity
-          
-          // Play melodic notes with better spacing
-          const moveThreshold = mobile ? 0.025 : 0.02
+
+          // Play melodic notes with better spacing - use settings threshold
+          const moveThreshold = settings.movementThreshold
           if (distance > moveThreshold && harpSynthRef.current) {
-            rightSideActive = true
-            
+            melodicActive = true
+
             if (!lastNoteTimeRef.current[bodyPart]) {
               lastNoteTimeRef.current[bodyPart] = 0
             }
-            
-            // More musical timing - not too fast
-            const baseInterval = 250  // Minimum time between notes
+
+            // More musical timing - use settings interval and tempo
+            const tempoMultiplier = (settings.tempoRange[0] + settings.tempoRange[1]) / 180
+            const baseInterval = settings.noteInterval / tempoMultiplier
             const velocityBonus = Math.min(150, smoothedVelocity * 3)
-            const noteInterval = baseInterval + velocityBonus
-            
+
+            // Apply swing - alternating notes are longer/shorter
+            const swingFactor = settings.swingAmount * 0.3 // Max 30% swing
+            const isSwungNote = phraseCounterRef.current % 2 === 0
+            const swingAdjustment = isSwungNote ? (1 + swingFactor) : (1 - swingFactor)
+            const noteInterval = (baseInterval + velocityBonus) * swingAdjustment
+
             if (currentTime - lastNoteTimeRef.current[bodyPart] > noteInterval) {
               const soundConfig = BODY_PART_SOUNDS[bodyPart]
-              const currentChord = CHORD_PROGRESSIONS[currentChordIndexRef.current]
-              
-              // Get the full scale for this chord, not just chord tones
-              const scale = SCALES_FOR_CHORDS[currentChord.name] || currentMusicalState.chordTones
-              const pattern = MELODIC_PATTERNS[currentChord.mood] || MELODIC_PATTERNS.contemplative
-              
+
+              // Use the scale from settings
+              const scale = userScale
+              const pattern = MELODIC_PATTERNS[chordData.mood] || MELODIC_PATTERNS.contemplative
+
               // Use melodic patterns for musical direction
               const patternStep = pattern[melodicPatternIndexRef.current % pattern.length]
-              
+
               // Y position determines base note in scale
               const scalePosition = Math.floor((1 - keypoint.y) * scale.length)
               const adjustedPosition = Math.max(0, Math.min(scale.length - 1, scalePosition + patternStep))
               const noteName = scale[adjustedPosition]
-              
-              // Determine octave based on body part and Y position
-              const octaveRange = soundConfig.octaveRange
+
+              // Determine octave based on body part config from settings or defaults
+              const bodyPartConfig = settings.bodyPartConfigs[bodyPart]
+              const octaveRange = bodyPartConfig?.octaveRange || soundConfig.octaveRange
               const baseOctave = octaveRange[0]
               const octaveBoost = Math.floor((1 - keypoint.y) * 2)  // 0-2 octave range
               const octave = Math.min(octaveRange[1], baseOctave + octaveBoost)
               
               const note = noteName + octave
               
-              // Smooth velocity based on movement and phrase position
+              // Smooth velocity based on movement, phrase position, and body part sensitivity
               const phrasePosition = phraseCounterRef.current % 8
               const phraseDynamics = phrasePosition < 4 ? 0.1 : -0.1  // Crescendo and decrescendo
-              const velocity = Math.min(0.6, Math.max(0.2, 0.4 + phraseDynamics + smoothedVelocity * 0.05))
+              const sensitivityMultiplier = bodyPartConfig?.sensitivity || 1.0
+
+              // Apply dynamics range from settings
+              const [minDynamics, maxDynamics] = settings.dynamicsRange
+              const rawVelocity = (0.4 + phraseDynamics + smoothedVelocity * 0.05) * sensitivityMultiplier
+              const velocity = Math.min(maxDynamics, Math.max(minDynamics, rawVelocity))
               
               // Vary note duration based on movement and phrase
               const isAccent = phrasePosition === 0 || phrasePosition === 4
@@ -529,7 +906,7 @@ export function useMusicGeneration() {
               
               // Update filter for expression
               if (filterRef.current) {
-                const baseFreq = currentChord.mood === 'bright' || currentChord.mood === 'brightening' ? 3000 : 2000
+                const baseFreq = chordData.mood === 'bright' || chordData.mood === 'brightening' ? 3000 : 2000
                 const filterFreq = baseFreq + (keypoint.y * 1000)  // Higher position = brighter
                 filterRef.current.frequency.rampTo(filterFreq, 0.2)
               }
@@ -550,9 +927,9 @@ export function useMusicGeneration() {
     })
     
     // Reset phrase counter if no activity
-    if (!rightSideActive && phraseCounterRef.current > 0) {
+    if (!melodicActive && phraseCounterRef.current > 0) {
       setTimeout(() => {
-        if (!rightSideActive) {
+        if (!melodicActive) {
           phraseCounterRef.current = 0
           melodicPatternIndexRef.current = 0
         }
@@ -564,12 +941,12 @@ export function useMusicGeneration() {
     // Report music generation performance
     const processingTime = performance.now() - startTime
     reportPerformance('musicGenerationTime', processingTime)
-    
+
     // Adaptive throttling for mobile
     if (mobile && processingTime > 50) {
       musicGenerationIntervalRef.current = Math.min(300, processingTime * 2)
     }
-  }, [initializeSynth])
+  }, [initializeSynth, settings.movementThreshold, settings.confidenceThreshold, settings.noteInterval, settings.bodyPartConfigs, settings.scale, settings.rootNote, settings.chordProgression, settings.tempoRange, settings.dynamicsRange, settings.swingAmount])
 
   const stopMusic = useCallback(() => {
     if (padSynthRef.current) {
@@ -812,14 +1189,17 @@ export function useMusicGeneration() {
     }
   }, [])
 
-  return { 
-    generateMusic, 
-    stopMusic, 
-    selectPreset, 
-    currentPreset, 
+  return {
+    generateMusic,
+    stopMusic,
+    selectPreset,
+    currentPreset,
     testSound,
     updateSoundSettings,
-    isMobile: isMobileDevice.current // Expose mobile status for UI optimizations
+    isMobile: isMobileDevice.current, // Expose mobile status for UI optimizations
+    currentChord,
+    movementIntensity,
+    bodyPartIntensities
   }
 }
 
