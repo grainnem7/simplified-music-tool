@@ -1,3 +1,13 @@
+/**
+ * SetupScreen - Traditional body part selector
+ *
+ * This component provides the traditional approach to configuring body tracking
+ * by selecting specific body parts from a visual diagram.
+ *
+ * Available via "Advanced setup" for users who prefer explicit body-part control.
+ * The main app flow uses the more inclusive MovementWizard by default.
+ */
+
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import BodyPartSelector from './BodyPartSelector'

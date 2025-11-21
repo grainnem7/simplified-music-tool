@@ -2,20 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import * as Tone from 'tone'
 import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
-import BodyDiagram from './BodyDiagram'
 import BodyPartActivity from './BodyPartActivity'
 import SettingsPanel from './SettingsPanel'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import { useMusicSettings } from '../contexts/MusicSettingsContext'
+import { useMovements } from '../contexts/MovementContext'
 import './PerformanceView.css'
 
 interface PerformanceViewProps {
   selectedBodyParts: string[]
   onBackToSetup: () => void
+  onChangeMovements?: () => void
 }
 
-function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewProps) {
+function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }: PerformanceViewProps) {
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
@@ -25,6 +26,7 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
   const { settings } = useMusicSettings()
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
   const { generateMusic, stopMusic, isMobile, currentChord, movementIntensity, bodyPartIntensities } = useMusicGeneration()
+  const { movements, isDefaultMode, hasCustomMovements } = useMovements()
 
   useEffect(() => {
     if (isPerforming && poses) {
@@ -89,7 +91,7 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
     <div className="performance-view">
       <div className="controls">
         <button onClick={onBackToSetup} className="button secondary">
-          Back to Setup
+          Back
         </button>
         <button onClick={handleTogglePerformance} className="button">
           {isPerforming ? 'Stop' : 'Start'} Performance
@@ -97,6 +99,11 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         <button onClick={() => setSettingsOpen(true)} className="button secondary">
           Settings
         </button>
+        {onChangeMovements && (
+          <button onClick={onChangeMovements} className="button secondary">
+            Change movements
+          </button>
+        )}
 
         {isMobile && (
           <div className="mobile-mode-indicator">
@@ -145,15 +152,42 @@ function PerformanceView({ selectedBodyParts, onBackToSetup }: PerformanceViewPr
         </div>
 
         <div className="status-panel">
-          <div className="body-parts-panel">
-            <h3>Active Tracking</h3>
-            <BodyDiagram selectedParts={selectedBodyParts} />
-            {selectedBodyParts.length === 0 && (
-              <p className="empty-state">No body parts selected</p>
+          {/* Movement status - generic, non-prescriptive display */}
+          <div className="movements-panel">
+            <h3>Movement Control</h3>
+            {isDefaultMode ? (
+              <div className="default-mode-info">
+                <p className="mode-description">
+                  Any movement in front of the camera will shape the sound.
+                </p>
+                {onChangeMovements && (
+                  <button
+                    onClick={onChangeMovements}
+                    className="customize-link"
+                  >
+                    Customise movements
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="custom-movements-info">
+                <p className="mode-description">
+                  {movements.length} custom movement{movements.length !== 1 ? 's' : ''} active
+                </p>
+                <ul className="movements-list-compact">
+                  {movements.slice(0, 3).map(m => (
+                    <li key={m.id}>{m.name}</li>
+                  ))}
+                  {movements.length > 3 && (
+                    <li className="more-indicator">+{movements.length - 3} more</li>
+                  )}
+                </ul>
+              </div>
             )}
           </div>
 
-          {isPerforming && (
+          {/* Activity monitor - works with both default and custom modes */}
+          {isPerforming && !isDefaultMode && (
             <BodyPartActivity
               bodyPartIntensities={bodyPartIntensities}
               selectedBodyParts={selectedBodyParts}

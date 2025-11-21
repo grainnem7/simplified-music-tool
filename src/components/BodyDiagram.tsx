@@ -1,3 +1,13 @@
+/**
+ * BodyDiagram - Visual body part diagram
+ *
+ * This component displays a visual representation of body parts for selection.
+ * Available via "Advanced setup" for users who need visual reference.
+ *
+ * Note: The main app flow uses abstract motion indicators to avoid
+ * normative body assumptions.
+ */
+
 import './BodyDiagram.css'
 
 interface BodyDiagramProps {

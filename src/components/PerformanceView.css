@@ -54,6 +54,73 @@
   gap: 3rem;
 }
 
+/* Movements panel - generic, non-prescriptive display */
+.movements-panel {
+  background: transparent;
+  padding: 0;
+}
+
+.movements-panel h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.mode-description {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.default-mode-info,
+.custom-movements-info {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.customize-link {
+  background: transparent;
+  border: none;
+  color: var(--accent-color);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.customize-link:hover {
+  color: var(--accent-hover);
+}
+
+.customize-link:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.movements-list-compact {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.movements-list-compact li {
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.movements-list-compact .more-indicator {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* Legacy body-parts-panel (kept for backwards compatibility) */
 .body-parts-panel {
   background: transparent;
   padding: 0;

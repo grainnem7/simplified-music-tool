@@ -1,3 +1,13 @@
+/**
+ * BodyPartSelector - Traditional body part selection
+ *
+ * This component allows explicit selection of body parts to track.
+ * Available via "Advanced setup" for users who need precise control.
+ *
+ * Note: The main app flow uses the MovementWizard for a more inclusive,
+ * non-prescriptive experience that doesn't assume specific anatomy.
+ */
+
 import './BodyPartSelector.css'
 
 interface BodyPartSelectorProps {

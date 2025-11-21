@@ -27,8 +27,6 @@ import {
   PlayArrow,
   Search,
   Code,
-  Rocket,
-  Science,
 } from "@mui/icons-material";
 import BodyPartSelector from "./BodyPartSelector";
 import BodyDiagram from "./BodyDiagram";
@@ -505,86 +503,6 @@ function OverviewTab() {
               Next
             </Button>
           </Box>
-        </Box>
-
-        {/* Key Features */}
-        <Box sx={{ mt: 8 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              mb: 4,
-              color: "text.primary",
-              textAlign: "center",
-            }}
-          >
-            Key Features
-          </Typography>
-          <Grid container spacing={3} sx={{ maxWidth: 900, mx: "auto" }}>
-            {[
-              {
-                icon: <Rocket sx={{ fontSize: 24 }} />,
-                title: "Accessible Design",
-                description:
-                  "Co-designed with disabled musicians to ensure true accessibility and usability for diverse bodies and abilities.",
-              },
-              {
-                icon: <Science sx={{ fontSize: 24 }} />,
-                title: "AI-Powered",
-                description:
-                  "Uses machine learning for pose detection and gesture recognition, with customizable body part tracking.",
-              },
-              {
-                icon: <Code sx={{ fontSize: 24 }} />,
-                title: "Browser-Based",
-                description:
-                  "No installation required. Works directly in your browser using webcam and modern web technologies.",
-              },
-            ].map((feature, idx) => (
-              <Grid size={{ xs: 12, md: 4 }} key={idx}>
-                <Box
-                  sx={{
-                    p: 3,
-                    height: "100%",
-                    borderLeft: "3px solid",
-                    borderColor: "primary.main",
-                    bgcolor: "background.paper",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                      mb: 1.5,
-                      color: "primary.main",
-                    }}
-                  >
-                    {feature.icon}
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        fontWeight: 600,
-                        color: "text.primary",
-                        fontSize: "1rem",
-                        mb: 0,
-                      }}
-                    >
-                      {feature.title}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {feature.description}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
         </Box>
 
         {/* Learn More - Expandable Sections */}
