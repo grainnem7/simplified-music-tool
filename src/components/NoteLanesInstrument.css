@@ -58,6 +58,45 @@
   margin-bottom: 1rem;
 }
 
+.lanes-setting-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.lanes-setting-group label {
+  color: var(--text-color, #fff);
+  font-size: 0.95rem;
+}
+
+.lanes-select {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 2px solid var(--border-color, #444);
+  background-color: var(--background-color, #1a1a1a);
+  color: var(--text-color, #fff);
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.lanes-select:focus {
+  outline: none;
+  border-color: var(--accent-color, #4A9EFF);
+}
+
+.lanes-current-source {
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(74, 158, 255, 0.2);
+  border: 1px solid var(--accent-color, #4A9EFF);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-color, #fff);
+}
+
 .lanes-stats {
   display: flex;
   gap: 2rem;

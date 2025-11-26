@@ -7,6 +7,22 @@ export interface CursorPosition {
   x: number
   y: number
   confidence: number  // 0-1, based on keypoint confidence
+  source: string      // Which body part(s) the cursor is derived from
+}
+
+/**
+ * Available tracking sources for cursor position
+ */
+export type TrackingSource = 'auto' | 'torso' | 'nose' | 'left_wrist' | 'right_wrist' | 'left_index' | 'right_index'
+
+export const TRACKING_SOURCE_LABELS: Record<TrackingSource, string> = {
+  'auto': 'Auto (best available)',
+  'torso': 'Torso (center of body)',
+  'nose': 'Head (nose)',
+  'left_wrist': 'Left Hand (wrist)',
+  'right_wrist': 'Right Hand (wrist)',
+  'left_index': 'Left Finger (index)',
+  'right_index': 'Right Finger (index)'
 }
 
 /**
@@ -53,120 +69,122 @@ class PositionSmoother {
 // Global smoother instance
 const smoother = new PositionSmoother(5)
 
-// Default video dimensions (used when actual dimensions unknown)
-const DEFAULT_VIDEO_WIDTH = 640
-const DEFAULT_VIDEO_HEIGHT = 480
-
 /**
  * Extract cursor position from pose data
  *
- * Strategy:
- * 1. Try to use torso centroid (shoulders + hips) for stability
- * 2. Fallback to nose if torso not detected
- * 3. Apply smoothing to reduce jitter
- * 4. Normalize coordinates to 0-1 range
+ * @param pose - The detected pose
+ * @param trackingSource - Which body part to track ('auto' uses fallback strategy)
  *
- * This is modular - we can easily swap which body point we track
- * by changing this function without affecting the rest of the system.
- *
- * @param pose - The detected pose from TensorFlow
- * @param videoWidth - Video frame width for normalization (default 640)
- * @param videoHeight - Video frame height for normalization (default 480)
+ * NOTE: Coordinates are expected to already be normalized (0-1) from usePoseDetection
  */
-export function getCursorFromPose(
-  pose: Pose,
-  videoWidth: number = DEFAULT_VIDEO_WIDTH,
-  videoHeight: number = DEFAULT_VIDEO_HEIGHT
-): CursorPosition | null {
+export function getCursorFromPose(pose: Pose, trackingSource: TrackingSource = 'auto'): CursorPosition | null {
   if (!pose || !pose.keypoints || pose.keypoints.length === 0) {
     return null
   }
 
   const keypoints = pose.keypoints
+  const MIN_CONFIDENCE = 0.3
 
   // Helper to find a keypoint by name
   const findKeypoint = (names: string[]): Keypoint | undefined => {
-    return keypoints.find(kp => {
-      return names.includes(kp.name || '')
-    })
+    return keypoints.find(kp => names.includes(kp.name || ''))
   }
 
-  // Strategy 1: Use torso centroid (most stable for full-body tracking)
-  const leftShoulder = findKeypoint(['left_shoulder', 'leftShoulder'])
-  const rightShoulder = findKeypoint(['right_shoulder', 'rightShoulder'])
-  const leftHip = findKeypoint(['left_hip', 'leftHip'])
-  const rightHip = findKeypoint(['right_hip', 'rightHip'])
-
-  // Confidence threshold for using a keypoint
-  const MIN_CONFIDENCE = 0.3
-
-  const torsoPoints: Array<{ x: number; y: number; score: number }> = []
-
-  if (leftShoulder && leftShoulder.score && leftShoulder.score > MIN_CONFIDENCE) {
-    torsoPoints.push({ x: leftShoulder.x, y: leftShoulder.y, score: leftShoulder.score })
-  }
-  if (rightShoulder && rightShoulder.score && rightShoulder.score > MIN_CONFIDENCE) {
-    torsoPoints.push({ x: rightShoulder.x, y: rightShoulder.y, score: rightShoulder.score })
-  }
-  if (leftHip && leftHip.score && leftHip.score > MIN_CONFIDENCE) {
-    torsoPoints.push({ x: leftHip.x, y: leftHip.y, score: leftHip.score })
-  }
-  if (rightHip && rightHip.score && rightHip.score > MIN_CONFIDENCE) {
-    torsoPoints.push({ x: rightHip.x, y: rightHip.y, score: rightHip.score })
+  // Helper to get a specific keypoint as cursor
+  const getKeypointCursor = (names: string[], sourceName: string): CursorPosition | null => {
+    const kp = findKeypoint(names)
+    if (kp && kp.score && kp.score > MIN_CONFIDENCE) {
+      const smoothed = smoother.addPosition(kp.x, kp.y)
+      return {
+        x: smoothed.x,
+        y: smoothed.y,
+        confidence: kp.score,
+        source: sourceName
+      }
+    }
+    return null
   }
 
-  // If we have at least 2 torso points, use their centroid
-  if (torsoPoints.length >= 2) {
-    const avgX = torsoPoints.reduce((sum, p) => sum + p.x, 0) / torsoPoints.length
-    const avgY = torsoPoints.reduce((sum, p) => sum + p.y, 0) / torsoPoints.length
-    const avgConfidence = torsoPoints.reduce((sum, p) => sum + p.score, 0) / torsoPoints.length
+  // Helper to get torso centroid
+  const getTorsoCursor = (): CursorPosition | null => {
+    const leftShoulder = findKeypoint(['left_shoulder', 'leftShoulder'])
+    const rightShoulder = findKeypoint(['right_shoulder', 'rightShoulder'])
+    const leftHip = findKeypoint(['left_hip', 'leftHip'])
+    const rightHip = findKeypoint(['right_hip', 'rightHip'])
 
-    // Normalize to 0-1 range
-    const normalizedX = Math.max(0, Math.min(1, avgX / videoWidth))
-    const normalizedY = Math.max(0, Math.min(1, avgY / videoHeight))
+    const torsoPoints: Array<{ x: number; y: number; score: number; name: string }> = []
 
-    // Apply smoothing
-    const smoothed = smoother.addPosition(normalizedX, normalizedY)
+    if (leftShoulder && leftShoulder.score && leftShoulder.score > MIN_CONFIDENCE) {
+      torsoPoints.push({ x: leftShoulder.x, y: leftShoulder.y, score: leftShoulder.score, name: 'L.Shoulder' })
+    }
+    if (rightShoulder && rightShoulder.score && rightShoulder.score > MIN_CONFIDENCE) {
+      torsoPoints.push({ x: rightShoulder.x, y: rightShoulder.y, score: rightShoulder.score, name: 'R.Shoulder' })
+    }
+    if (leftHip && leftHip.score && leftHip.score > MIN_CONFIDENCE) {
+      torsoPoints.push({ x: leftHip.x, y: leftHip.y, score: leftHip.score, name: 'L.Hip' })
+    }
+    if (rightHip && rightHip.score && rightHip.score > MIN_CONFIDENCE) {
+      torsoPoints.push({ x: rightHip.x, y: rightHip.y, score: rightHip.score, name: 'R.Hip' })
+    }
 
-    return {
-      x: smoothed.x,
-      y: smoothed.y,
-      confidence: avgConfidence
+    if (torsoPoints.length >= 2) {
+      const avgX = torsoPoints.reduce((sum, p) => sum + p.x, 0) / torsoPoints.length
+      const avgY = torsoPoints.reduce((sum, p) => sum + p.y, 0) / torsoPoints.length
+      const avgConfidence = torsoPoints.reduce((sum, p) => sum + p.score, 0) / torsoPoints.length
+      const smoothed = smoother.addPosition(avgX, avgY)
+
+      return {
+        x: smoothed.x,
+        y: smoothed.y,
+        confidence: avgConfidence,
+        source: `Torso (${torsoPoints.map(p => p.name).join(', ')})`
+      }
+    }
+    return null
+  }
+
+  // If specific source requested, try that first
+  if (trackingSource !== 'auto') {
+    switch (trackingSource) {
+      case 'torso':
+        return getTorsoCursor()
+      case 'nose':
+        return getKeypointCursor(['nose'], 'Nose')
+      case 'left_wrist':
+        return getKeypointCursor(['left_wrist', 'leftWrist'], 'Left Wrist')
+      case 'right_wrist':
+        return getKeypointCursor(['right_wrist', 'rightWrist'], 'Right Wrist')
+      case 'left_index':
+        return getKeypointCursor(['left_index', 'leftIndex', 'left_index_finger'], 'Left Index')
+      case 'right_index':
+        return getKeypointCursor(['right_index', 'rightIndex', 'right_index_finger'], 'Right Index')
     }
   }
 
-  // Strategy 2: Fallback to nose (good for head/upper body tracking)
-  const nose = findKeypoint(['nose'])
-  if (nose && nose.score && nose.score > MIN_CONFIDENCE) {
-    const normalizedX = Math.max(0, Math.min(1, nose.x / videoWidth))
-    const normalizedY = Math.max(0, Math.min(1, nose.y / videoHeight))
-    const smoothed = smoother.addPosition(normalizedX, normalizedY)
+  // Auto mode: try strategies in order
+  // Strategy 1: Torso centroid (most stable)
+  const torsoCursor = getTorsoCursor()
+  if (torsoCursor) return torsoCursor
 
-    return {
-      x: smoothed.x,
-      y: smoothed.y,
-      confidence: nose.score
-    }
-  }
+  // Strategy 2: Nose (good for upper body)
+  const noseCursor = getKeypointCursor(['nose'], 'Nose')
+  if (noseCursor) return noseCursor
 
-  // Strategy 3: Fallback to any high-confidence keypoint
+  // Strategy 3: Any high-confidence keypoint
   const bestKeypoint = keypoints
     .filter(kp => kp.score && kp.score > MIN_CONFIDENCE)
     .sort((a, b) => (b.score || 0) - (a.score || 0))[0]
 
   if (bestKeypoint) {
-    const normalizedX = Math.max(0, Math.min(1, bestKeypoint.x / videoWidth))
-    const normalizedY = Math.max(0, Math.min(1, bestKeypoint.y / videoHeight))
-    const smoothed = smoother.addPosition(normalizedX, normalizedY)
-
+    const smoothed = smoother.addPosition(bestKeypoint.x, bestKeypoint.y)
     return {
       x: smoothed.x,
       y: smoothed.y,
-      confidence: bestKeypoint.score || 0
+      confidence: bestKeypoint.score || 0,
+      source: bestKeypoint.name || 'Unknown'
     }
   }
 
-  // No suitable keypoints found
   return null
 }
 

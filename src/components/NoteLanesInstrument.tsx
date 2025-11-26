@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Pose } from '@tensorflow-models/pose-detection'
 import * as Tone from 'tone'
 import { useLanePersonalization } from '../hooks/useLanePersonalization'
-import { getCursorFromPose } from '../services/zoneMapping'
+import { getCursorFromPose, TrackingSource, TRACKING_SOURCE_LABELS } from '../services/zoneMapping'
 import './NoteLanesInstrument.css'
 
 /**
@@ -88,6 +88,8 @@ export function NoteLanesInstrument({ poses, isActive, onBack }: NoteLanesInstru
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [touchMode, setTouchMode] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>('')
+  const [trackingSource, setTrackingSource] = useState<TrackingSource>('auto')
+  const [currentSource, setCurrentSource] = useState<string>('')
 
   // Personalization hook - adapts lane positions to user's vertical range
   const { adaptLanes, updateMovementData, resetAdaptation, getStats } = useLanePersonalization()
@@ -284,15 +286,19 @@ export function NoteLanesInstrument({ poses, isActive, onBack }: NoteLanesInstru
     }
 
     const pose = poses[0]
-    const cursor = getCursorFromPose(pose)
+    const cursor = getCursorFromPose(pose, trackingSource)
 
     if (!cursor) {
       setDebugInfo(`Pose has ${pose.keypoints?.length || 0} keypoints but no valid cursor`)
+      setCurrentSource('')
       return
     }
 
-    // Debug: show raw cursor value
-    setDebugInfo(`Y: ${(cursor.y * 100).toFixed(1)}% | Conf: ${(cursor.confidence * 100).toFixed(0)}%`)
+    // Update current source display
+    setCurrentSource(cursor.source)
+
+    // Debug: show raw cursor value and source
+    setDebugInfo(`Y: ${(cursor.y * 100).toFixed(1)}% | ${cursor.source}`)
 
     // Update personalization data with Y position
     updateMovementData(cursor.y)
@@ -313,7 +319,7 @@ export function NoteLanesInstrument({ poses, isActive, onBack }: NoteLanesInstru
         lastLaneIdRef.current = null
       }
     }
-  }, [poses, isActive, touchMode, detectLane, triggerLane, updateMovementData])
+  }, [poses, isActive, touchMode, trackingSource, detectLane, triggerLane, updateMovementData])
 
   // Initialize audio when activated
   useEffect(() => {
@@ -380,6 +386,26 @@ export function NoteLanesInstrument({ poses, isActive, onBack }: NoteLanesInstru
       {/* Settings Panel */}
       {settingsOpen && (
         <div className="lanes-settings-panel">
+          <div className="lanes-setting-group">
+            <label htmlFor="tracking-source"><strong>Track body part:</strong></label>
+            <select
+              id="tracking-source"
+              value={trackingSource}
+              onChange={(e) => setTrackingSource(e.target.value as TrackingSource)}
+              className="lanes-select"
+            >
+              {(Object.keys(TRACKING_SOURCE_LABELS) as TrackingSource[]).map((key) => (
+                <option key={key} value={key}>
+                  {TRACKING_SOURCE_LABELS[key]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {currentSource && (
+            <div className="lanes-current-source">
+              <strong>Currently using:</strong> {currentSource}
+            </div>
+          )}
           <div className="lanes-stats">
             <p><strong>Samples:</strong> {stats.sampleCount}</p>
             {stats.sampleCount > 15 && (

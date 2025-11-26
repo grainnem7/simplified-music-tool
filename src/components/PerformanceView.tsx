@@ -8,6 +8,9 @@ import { MovementZonesInstrument } from './MovementZonesInstrument'
 import { GridPadsInstrument } from './GridPadsInstrument'
 import { XYControllerInstrument } from './XYControllerInstrument'
 import { NoteLanesInstrument } from './NoteLanesInstrument'
+import NoteLanesOverlay from './NoteLanesOverlay'
+import { useNoteLanes } from '../hooks/useNoteLanes'
+import { TRACKING_SOURCE_LABELS, TrackingSource } from '../services/zoneMapping'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import { useMusicSettings } from '../contexts/MusicSettingsContext'
@@ -22,18 +25,29 @@ interface PerformanceViewProps {
 
 type InstrumentMode = 'traditional' | 'zones' | 'grid' | 'xy' | 'lanes'
 
+// Webcam dimensions
+const WEBCAM_WIDTH = 640
+const WEBCAM_HEIGHT = 480
+
 function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }: PerformanceViewProps) {
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [instrumentMode, setInstrumentMode] = useState<InstrumentMode>('traditional')
+  const [lanesSettingsOpen, setLanesSettingsOpen] = useState(false)
   const webcamRef = useRef<any>(null)
 
   const { settings } = useMusicSettings()
   const { poses, startDetection, stopDetection } = usePoseDetection(webcamRef)
   const { generateMusic, stopMusic, isMobile, currentChord, movementIntensity, bodyPartIntensities } = useMusicGeneration()
   const { movements, isDefaultMode, hasCustomMovements } = useMovements()
+
+  // Note Lanes hook - only active when in lanes mode
+  const noteLanes = useNoteLanes({
+    poses,
+    isActive: isPerforming && instrumentMode === 'lanes'
+  })
 
   useEffect(() => {
     if (isPerforming && poses) {
@@ -242,22 +256,10 @@ function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }
     )
   }
 
-  // If in note lanes mode, render the note lanes instrument
+  // If in note lanes mode, render webcam with lanes overlay
   if (instrumentMode === 'lanes') {
     return (
       <div className="performance-view lanes-mode">
-        <div className="zones-webcam-container" style={{ display: isPerforming ? 'block' : 'none' }}>
-          <WebcamCapture
-            ref={webcamRef}
-            poses={poses || undefined}
-            selectedBodyParts={[]}
-          />
-        </div>
-        <NoteLanesInstrument
-          poses={poses}
-          isActive={isPerforming}
-          onBack={() => handleModeSwitch('traditional')}
-        />
         <div className="controls mode-switch-controls">
           <button onClick={() => handleModeSwitch('traditional')} className="button secondary">
             Traditional
@@ -274,10 +276,79 @@ function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }
           <button onClick={handleTogglePerformance} className="button primary">
             {isPerforming ? 'Stop' : 'Start'}
           </button>
+          <button
+            onClick={() => setLanesSettingsOpen(!lanesSettingsOpen)}
+            className={`button ${lanesSettingsOpen ? 'primary' : 'secondary'}`}
+          >
+            Settings
+          </button>
           <button onClick={onBackToSetup} className="button secondary">
             Exit
           </button>
         </div>
+
+        {/* Settings panel for tracking source selection */}
+        {lanesSettingsOpen && (
+          <div className="lanes-settings-bar">
+            <label htmlFor="lanes-tracking">Track:</label>
+            <select
+              id="lanes-tracking"
+              value={noteLanes.trackingSource}
+              onChange={(e) => noteLanes.setTrackingSource(e.target.value as TrackingSource)}
+              className="lanes-tracking-select"
+            >
+              {(Object.keys(TRACKING_SOURCE_LABELS) as TrackingSource[]).map((key) => (
+                <option key={key} value={key}>
+                  {TRACKING_SOURCE_LABELS[key]}
+                </option>
+              ))}
+            </select>
+            <button onClick={noteLanes.resetAdaptation} className="button secondary small">
+              Reset Adaptation
+            </button>
+            {noteLanes.stats.sampleCount > 15 && (
+              <span className="lanes-stats-info">
+                Range: {(noteLanes.stats.rangeY * 100).toFixed(0)}%
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Main webcam area with lanes overlay */}
+        <div className="lanes-webcam-area">
+          <div className="lanes-webcam-container">
+            <WebcamCapture
+              ref={webcamRef}
+              poses={poses || undefined}
+              selectedBodyParts={[]}
+            />
+            {/* Lanes overlay on top of webcam */}
+            <NoteLanesOverlay
+              width={WEBCAM_WIDTH}
+              height={WEBCAM_HEIGHT}
+              lanes={noteLanes.adaptedLanes}
+              activeLaneId={noteLanes.activeLaneId}
+              cursorY={noteLanes.cursorY}
+              cursorSource={noteLanes.cursorSource}
+              showCursor={isPerforming}
+            />
+          </div>
+
+          {/* Instructions */}
+          <div className="lanes-instructions">
+            {!isPerforming ? (
+              <p>Press <strong>Start</strong> to begin. Move up and down to play different notes.</p>
+            ) : noteLanes.cursorY === null ? (
+              <p>Looking for you... Make sure your body is visible to the camera.</p>
+            ) : (
+              <p>
+                <strong>Tracking:</strong> {noteLanes.cursorSource} |
+                <strong> Y:</strong> {(noteLanes.cursorY * 100).toFixed(0)}%
+              </p>
+            )}
+          </div>
+        </div>
+
         {error && (
           <div className="error-message">
             <span>⚠️</span>
