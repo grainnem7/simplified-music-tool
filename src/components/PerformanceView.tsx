@@ -4,6 +4,10 @@ import WebcamCapture from './WebcamCapture'
 import MusicGenerator from './MusicGenerator'
 import BodyPartActivity from './BodyPartActivity'
 import SettingsPanel from './SettingsPanel'
+import { MovementZonesInstrument } from './MovementZonesInstrument'
+import { GridPadsInstrument } from './GridPadsInstrument'
+import { XYControllerInstrument } from './XYControllerInstrument'
+import { NoteLanesInstrument } from './NoteLanesInstrument'
 import { usePoseDetection } from '../hooks/usePoseDetection'
 import { useMusicGeneration } from '../hooks/useMusicGeneration'
 import { useMusicSettings } from '../contexts/MusicSettingsContext'
@@ -16,11 +20,14 @@ interface PerformanceViewProps {
   onChangeMovements?: () => void
 }
 
+type InstrumentMode = 'traditional' | 'zones' | 'grid' | 'xy' | 'lanes'
+
 function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }: PerformanceViewProps) {
   const [isPerforming, setIsPerforming] = useState(false)
   const [error, setError] = useState<string>('')
   const [showDebug, setShowDebug] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [instrumentMode, setInstrumentMode] = useState<InstrumentMode>('traditional')
   const webcamRef = useRef<any>(null)
 
   const { settings } = useMusicSettings()
@@ -87,6 +94,201 @@ function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }
     }
   }
 
+  // Handle mode switch - stop performance when switching
+  const handleModeSwitch = (newMode: InstrumentMode) => {
+    if (isPerforming) {
+      stopDetection()
+      stopMusic()
+      setIsPerforming(false)
+    }
+    setInstrumentMode(newMode)
+  }
+
+  // If in zones mode, render the zones instrument instead
+  if (instrumentMode === 'zones') {
+    return (
+      <div className="performance-view zones-mode">
+        <div className="zones-webcam-container" style={{ display: isPerforming ? 'block' : 'none' }}>
+          <WebcamCapture
+            ref={webcamRef}
+            poses={poses || undefined}
+            selectedBodyParts={[]}
+          />
+        </div>
+        <MovementZonesInstrument
+          poses={poses}
+          isActive={isPerforming}
+          onBack={() => handleModeSwitch('traditional')}
+        />
+        <div className="controls mode-switch-controls">
+          <button onClick={() => handleModeSwitch('traditional')} className="button secondary">
+            Traditional
+          </button>
+          <button onClick={() => handleModeSwitch('grid')} className="button secondary">
+            Grid Pads
+          </button>
+          <button onClick={() => handleModeSwitch('xy')} className="button secondary">
+            XY Pad
+          </button>
+          <button onClick={() => handleModeSwitch('lanes')} className="button secondary">
+            Note Lanes
+          </button>
+          <button onClick={handleTogglePerformance} className="button primary">
+            {isPerforming ? 'Stop' : 'Start'}
+          </button>
+          <button onClick={onBackToSetup} className="button secondary">
+            Exit
+          </button>
+        </div>
+        {error && (
+          <div className="error-message">
+            <span>⚠️</span>
+            {error}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // If in grid pads mode, render the grid pads instrument
+  if (instrumentMode === 'grid') {
+    return (
+      <div className="performance-view grid-mode">
+        <div className="zones-webcam-container" style={{ display: isPerforming ? 'block' : 'none' }}>
+          <WebcamCapture
+            ref={webcamRef}
+            poses={poses || undefined}
+            selectedBodyParts={[]}
+          />
+        </div>
+        <GridPadsInstrument
+          poses={poses}
+          isActive={isPerforming}
+          onBack={() => handleModeSwitch('traditional')}
+        />
+        <div className="controls mode-switch-controls">
+          <button onClick={() => handleModeSwitch('traditional')} className="button secondary">
+            Traditional
+          </button>
+          <button onClick={() => handleModeSwitch('zones')} className="button secondary">
+            Zones
+          </button>
+          <button onClick={() => handleModeSwitch('xy')} className="button secondary">
+            XY Pad
+          </button>
+          <button onClick={() => handleModeSwitch('lanes')} className="button secondary">
+            Note Lanes
+          </button>
+          <button onClick={handleTogglePerformance} className="button primary">
+            {isPerforming ? 'Stop' : 'Start'}
+          </button>
+          <button onClick={onBackToSetup} className="button secondary">
+            Exit
+          </button>
+        </div>
+        {error && (
+          <div className="error-message">
+            <span>⚠️</span>
+            {error}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // If in XY controller mode, render the XY controller instrument
+  if (instrumentMode === 'xy') {
+    return (
+      <div className="performance-view xy-mode">
+        <div className="zones-webcam-container" style={{ display: isPerforming ? 'block' : 'none' }}>
+          <WebcamCapture
+            ref={webcamRef}
+            poses={poses || undefined}
+            selectedBodyParts={[]}
+          />
+        </div>
+        <XYControllerInstrument
+          poses={poses}
+          isActive={isPerforming}
+          onBack={() => handleModeSwitch('traditional')}
+        />
+        <div className="controls mode-switch-controls">
+          <button onClick={() => handleModeSwitch('traditional')} className="button secondary">
+            Traditional
+          </button>
+          <button onClick={() => handleModeSwitch('zones')} className="button secondary">
+            Zones
+          </button>
+          <button onClick={() => handleModeSwitch('grid')} className="button secondary">
+            Grid Pads
+          </button>
+          <button onClick={() => handleModeSwitch('lanes')} className="button secondary">
+            Note Lanes
+          </button>
+          <button onClick={handleTogglePerformance} className="button primary">
+            {isPerforming ? 'Stop' : 'Start'}
+          </button>
+          <button onClick={onBackToSetup} className="button secondary">
+            Exit
+          </button>
+        </div>
+        {error && (
+          <div className="error-message">
+            <span>⚠️</span>
+            {error}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // If in note lanes mode, render the note lanes instrument
+  if (instrumentMode === 'lanes') {
+    return (
+      <div className="performance-view lanes-mode">
+        <div className="zones-webcam-container" style={{ display: isPerforming ? 'block' : 'none' }}>
+          <WebcamCapture
+            ref={webcamRef}
+            poses={poses || undefined}
+            selectedBodyParts={[]}
+          />
+        </div>
+        <NoteLanesInstrument
+          poses={poses}
+          isActive={isPerforming}
+          onBack={() => handleModeSwitch('traditional')}
+        />
+        <div className="controls mode-switch-controls">
+          <button onClick={() => handleModeSwitch('traditional')} className="button secondary">
+            Traditional
+          </button>
+          <button onClick={() => handleModeSwitch('zones')} className="button secondary">
+            Zones
+          </button>
+          <button onClick={() => handleModeSwitch('grid')} className="button secondary">
+            Grid Pads
+          </button>
+          <button onClick={() => handleModeSwitch('xy')} className="button secondary">
+            XY Pad
+          </button>
+          <button onClick={handleTogglePerformance} className="button primary">
+            {isPerforming ? 'Stop' : 'Start'}
+          </button>
+          <button onClick={onBackToSetup} className="button secondary">
+            Exit
+          </button>
+        </div>
+        {error && (
+          <div className="error-message">
+            <span>⚠️</span>
+            {error}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Traditional mode rendering
   return (
     <div className="performance-view">
       <div className="controls">
@@ -98,6 +300,18 @@ function PerformanceView({ selectedBodyParts, onBackToSetup, onChangeMovements }
         </button>
         <button onClick={() => setSettingsOpen(true)} className="button secondary">
           Settings
+        </button>
+        <button onClick={() => handleModeSwitch('zones')} className="button secondary">
+          Zones
+        </button>
+        <button onClick={() => handleModeSwitch('grid')} className="button secondary">
+          Grid Pads
+        </button>
+        <button onClick={() => handleModeSwitch('xy')} className="button secondary">
+          XY Pad
+        </button>
+        <button onClick={() => handleModeSwitch('lanes')} className="button secondary">
+          Note Lanes
         </button>
         {onChangeMovements && (
           <button onClick={onChangeMovements} className="button secondary">

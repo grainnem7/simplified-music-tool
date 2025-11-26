@@ -42,18 +42,27 @@ npm run preview
 ```
 src/
 ├── components/
-│   ├── WelcomeScreen.tsx       # Initial welcome interface
-│   ├── SetupScreen.tsx         # Body part selection setup
-│   ├── BodyPartSelector.tsx    # UI for selecting tracked body parts
-│   ├── WebcamCapture.tsx       # Handles webcam feed
-│   ├── PerformanceView.tsx     # Main performance interface
-│   └── MusicGenerator.tsx      # Music visualization component
+│   ├── WelcomeScreen.tsx             # Initial welcome interface
+│   ├── SetupScreen.tsx               # Body part selection setup
+│   ├── BodyPartSelector.tsx          # UI for selecting tracked body parts
+│   ├── WebcamCapture.tsx             # Handles webcam feed
+│   ├── PerformanceView.tsx           # Main performance interface (supports mode switching)
+│   ├── MusicGenerator.tsx            # Music visualization component
+│   ├── MovementZonesInstrument.tsx   # NEW: Simplified zones-based instrument
+│   ├── GridPadsInstrument.tsx        # NEW: ThumbJam-style grid pads instrument
+│   ├── XYControllerInstrument.tsx    # NEW: Kaoss Pad-style XY controller
+│   └── NoteLanesInstrument.tsx       # NEW: ThumbJam-inspired lane-based instrument
 ├── services/
 │   ├── poseDetection.ts        # Pose detection service utilities
-│   └── musicMapping.ts         # Movement to music parameter mapping
+│   ├── musicMapping.ts         # Movement to music parameter mapping
+│   └── zoneMapping.ts          # NEW: Cursor extraction from pose (shared by all modes)
 ├── hooks/
-│   ├── usePoseDetection.ts     # Custom hook for pose detection
-│   └── useMusicGeneration.ts   # Custom hook for music generation
+│   ├── usePoseDetection.ts           # Custom hook for pose detection
+│   ├── useMusicGeneration.ts         # Custom hook for music generation
+│   ├── useZonePersonalization.ts     # NEW: Zone boundary adaptation hook
+│   ├── useGridPersonalization.ts     # NEW: Grid pad layout adaptation hook
+│   ├── useXYPersonalization.ts       # NEW: XY controller range adaptation hook
+│   └── useLanePersonalization.ts     # NEW: Note lanes vertical range adaptation hook
 └── types/
     └── index.ts                # TypeScript type definitions
 ```
@@ -108,6 +117,153 @@ src/
 - Pentatonic scale for musical output
 - Dynamic tempo calculation
 - Position-based note selection
+
+### Movement Zones Mode (NEW)
+
+The application now includes a **Movement Zones** mode - a simplified, predictable instrument interface designed for accessibility and ease of use.
+
+**Key Features**:
+- **Visual Zones**: 6 large, clearly labeled zones (2×3 grid)
+- **Predictable Mapping**: Each zone always produces the same type of sound
+- **Abstract Cursor**: Non-body-specific movement indicator
+- **Adaptive Boundaries**: Zones adapt to user's natural movement range
+- **High Accessibility**: High contrast, large touch targets, no reliance on color alone
+
+**Component**: [MovementZonesInstrument.tsx](src/components/MovementZonesInstrument.tsx)
+- Renders zone grid with labels and borders
+- Tracks cursor position from pose data
+- Plays sounds using Tone.js when cursor enters a zone
+- Uses personalization hook for adaptive boundaries
+
+**Service**: [zoneMapping.ts](src/services/zoneMapping.ts)
+- Extracts cursor position from pose (torso centroid or fallback strategies)
+- Applies exponential smoothing to reduce jitter
+- Modular design allows easy swapping of tracking strategies
+
+**Hook**: [useZonePersonalization.ts](src/hooks/useZonePersonalization.ts)
+- Tracks user's movement range (min/max X and Y)
+- Gradually adapts zone boundaries to fit user's range
+- Stores adaptation in localStorage
+- Uses simple heuristics (could be enhanced with ML)
+
+**Mode Switching**: Users can toggle between Traditional, Zones, and Grid Pads modes via [PerformanceView.tsx](src/components/PerformanceView.tsx)
+
+**Documentation**: See [MOVEMENT_ZONES.md](MOVEMENT_ZONES.md) for detailed documentation.
+
+### Grid Pads Mode (NEW)
+
+The application now includes a **Grid Pads** mode - a ThumbJam-style grid of large, discrete musical pads that can be triggered by movement or direct touch.
+
+**Key Features**:
+- **Discrete Pads**: 6 large pads (2×3 grid) with clear gaps between them
+- **Dual Interaction**: Works with both movement tracking and direct touch/tap
+- **Musical Chords**: Each pad plays a distinct chord (e.g., C Major, G Major)
+- **High Contrast**: Bold colors, thick borders (6-8px), clear visual feedback
+- **Touch/Movement Toggle**: Users can switch between interaction modes
+- **Debouncing**: 400ms delay prevents rapid re-triggering
+
+**Component**: [GridPadsInstrument.tsx](src/components/GridPadsInstrument.tsx)
+- Renders button-like pads with rounded corners
+- Supports both pose-based and touch-based interaction
+- Plays chords using Tone.js PolySynth
+- Uses personalization hook for adaptive pad layout
+
+**Hook**: [useGridPersonalization.ts](src/hooks/useGridPersonalization.ts)
+- Tracks user's movement range (min/max X and Y)
+- Adapts pad positions and sizes to fit user's range
+- Stores personalization in localStorage
+- Includes stubs for future ML enhancements (miss detection, optimal sizing)
+
+**Shared Service**: Uses existing [zoneMapping.ts](src/services/zoneMapping.ts) for cursor extraction
+
+**Key Differences from Movement Zones**:
+- Grid Pads: Discrete buttons with gaps, chord-based, touch support
+- Movement Zones: Continuous zones, note-based, movement only
+
+**Documentation**: See [GRID_PADS.md](GRID_PADS.md) for detailed documentation.
+
+### XY Controller Mode (NEW)
+
+The application now includes an **XY Controller** mode - a Kaoss Pad-style 2D control surface for expressive, continuous parameter control.
+
+**Key Features**:
+- **2D Control Surface**: Large XY area with labeled axes and crosshair
+- **Continuous Parameters**: X and Y each control a specific musical parameter
+- **Configurable Mappings**: Choose what each axis controls (pitch, filter, volume, reverb, delay, vibrato)
+- **Real-time Control**: Parameters update smoothly as you move
+- **Adaptive Range**: Scales to your natural movement range
+- **Settings Panel**: Optional panel to customize X/Y parameter assignments
+
+**Component**: [XYControllerInstrument.tsx](src/components/XYControllerInstrument.tsx)
+- Renders large 2D surface with crosshair following user position
+- Maps XY coordinates to audio parameters in real-time
+- Configurable parameter assignments via settings panel
+- Continuous sound generation (not triggered like pads)
+
+**Hook**: [useXYPersonalization.ts](src/hooks/useXYPersonalization.ts)
+- Tracks user's movement range (min/max X and Y)
+- Adapts XY mapping to scale user's range to full (0,1) space
+- Stores personalization in localStorage
+- Includes stubs for future enhancements (adaptive smoothing, dead zones)
+
+**Shared Service**: Uses existing [zoneMapping.ts](src/services/zoneMapping.ts) for cursor extraction
+
+**Default Mapping**:
+- X Axis (Horizontal): Pitch (C3 to B5, 21-note scale)
+- Y Axis (Vertical): Filter Brightness (200Hz to 8000Hz lowpass)
+
+**Audio Engine**:
+```
+Synth → Filter → Delay → Reverb → Vibrato → Speakers
+```
+
+**Mode Switching**: Users can toggle between Traditional, Zones, Grid Pads, XY Controller, and Note Lanes modes via [PerformanceView.tsx](src/components/PerformanceView.tsx)
+
+**Documentation**: See [XY_CONTROLLER.md](XY_CONTROLLER.md) for detailed documentation.
+
+### Note Lanes Mode (NEW)
+
+The application now includes a **Note Lanes** mode - a ThumbJam-inspired lane-based instrument with clear horizontal lanes for melodic control.
+
+**Key Features**:
+- **Horizontal Lanes**: 6 stacked lanes (vertical layout) for vertical movement control
+- **Clear Note Mapping**: Each lane labeled with its note name (C major pentatonic: C5, A4, G4, E4, D4, C4)
+- **Hysteresis**: 25% threshold prevents flickering when crossing lane boundaries
+- **Dual Interaction**: Works with both vertical movement and direct touch/tap
+- **Single-Axis Control**: Only Y-axis (vertical) position matters, simplifying interaction
+- **Adaptive Range**: Lanes scale to user's natural vertical movement range
+
+**Component**: [NoteLanesInstrument.tsx](src/components/NoteLanesInstrument.tsx)
+- Renders horizontal lanes stacked vertically
+- Detects lane crossing with hysteresis to prevent flickering
+- Plays single notes (monophonic) using Tone.js Synth
+- Supports both movement-based and touch-based interaction
+- Movement/Touch mode toggle for accessibility
+
+**Hook**: [useLanePersonalization.ts](src/hooks/useLanePersonalization.ts)
+- Tracks user's vertical (Y-axis) movement range
+- Adapts lane positions and heights to fit user's range
+- Stores personalization in localStorage
+- Includes stubs for future ML enhancements (tremor detection, adaptive hysteresis)
+
+**Shared Service**: Uses existing [zoneMapping.ts](src/services/zoneMapping.ts) for cursor extraction, focusing on Y-axis position
+
+**Key Differences from Other Modes**:
+- Note Lanes: 1D vertical control, lane crossing with hysteresis, monophonic
+- Movement Zones: 2D continuous zones, no hysteresis, polyphonic
+- Grid Pads: 2D discrete pads, chord-based, debouncing instead of hysteresis
+- XY Controller: 2D continuous, parameter control instead of notes
+
+**Audio Engine**:
+```
+Synth (Triangle Wave) → Reverb → Speakers
+```
+
+**Hysteresis System**: Must move 25% into next lane before switching, preventing accidental lane changes and reducing cognitive load.
+
+**Mode Switching**: Users can toggle between Traditional, Zones, Grid Pads, XY Controller, and Note Lanes modes via [PerformanceView.tsx](src/components/PerformanceView.tsx)
+
+**Documentation**: See [NOTE_LANES.md](NOTE_LANES.md) for detailed documentation.
 
 ### Development Guidelines
 

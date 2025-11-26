@@ -1,0 +1,221 @@
+.movement-zones-instrument {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.zones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.zones-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.zones-instruction {
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--surface-color, rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
+}
+
+.zones-instruction p {
+  margin: 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.zones-subtext {
+  font-size: 0.9rem !important;
+  font-weight: 400 !important;
+  opacity: 0.8;
+}
+
+.zones-container {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  background-color: var(--background-color, #f5f5f5);
+  border: 3px solid var(--border-color, #333);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+/* Individual zones */
+.zone {
+  position: absolute;
+  border: 4px solid var(--zone-border, #000);
+  background-color: var(--zone-bg, rgba(200, 200, 200, 0.2));
+  transition: all 0.2s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* Hover effect for better feedback */
+.zone:hover {
+  background-color: var(--zone-bg-hover, rgba(200, 200, 200, 0.4));
+}
+
+/* Active zone (cursor is in it) */
+.zone-active {
+  background-color: var(--zone-bg-active, rgba(100, 150, 255, 0.4)) !important;
+  border-width: 6px;
+  border-color: var(--zone-border-active, #0066cc);
+  box-shadow: 0 0 20px rgba(0, 100, 200, 0.5);
+  z-index: 10;
+}
+
+/* Timbre-based coloring */
+.zone-deep {
+  --zone-border: #8B4513;
+  --zone-bg: rgba(139, 69, 19, 0.1);
+  --zone-bg-hover: rgba(139, 69, 19, 0.2);
+}
+
+.zone-warm {
+  --zone-border: #FF8C00;
+  --zone-bg: rgba(255, 140, 0, 0.1);
+  --zone-bg-hover: rgba(255, 140, 0, 0.2);
+}
+
+.zone-bright {
+  --zone-border: #FFD700;
+  --zone-bg: rgba(255, 215, 0, 0.1);
+  --zone-bg-hover: rgba(255, 215, 0, 0.2);
+}
+
+.zone-content {
+  text-align: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.zone-label {
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-color, #000);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.zone-description {
+  font-size: clamp(0.75rem, 2vw, 1rem);
+  margin: 0;
+  color: var(--text-color-secondary, #333);
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Cursor indicator */
+.cursor-indicator {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 100;
+  transition: all 0.1s ease-out;
+}
+
+.cursor-dot {
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle,
+    rgba(255, 50, 50, 0.9) 0%,
+    rgba(255, 50, 50, 0.6) 50%,
+    rgba(255, 50, 50, 0.2) 100%
+  );
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 10px rgba(255, 50, 50, 0.6),
+    0 0 20px rgba(255, 50, 50, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .movement-zones-instrument {
+    padding: 0.5rem;
+  }
+
+  .zones-header {
+    flex-wrap: wrap;
+  }
+
+  .zones-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .zone-label {
+    font-size: 0.9rem;
+  }
+
+  .zone-description {
+    display: none; /* Hide descriptions on mobile to reduce clutter */
+  }
+
+  .cursor-dot {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .zone {
+    border-width: 6px;
+  }
+
+  .zone-active {
+    border-width: 8px;
+  }
+
+  .cursor-dot {
+    border-width: 4px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .zone,
+  .cursor-indicator {
+    transition: none;
+  }
+
+  .cursor-dot {
+    animation: none;
+  }
+}
+
+/* Ensure sufficient color contrast in dark mode */
+@media (prefers-color-scheme: dark) {
+  .zone-label,
+  .zone-description {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  }
+}
